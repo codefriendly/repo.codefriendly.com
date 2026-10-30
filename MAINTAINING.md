@@ -290,13 +290,30 @@ Before staging a binary, require the manifest check to succeed:
 python3 scripts/catalog.py --allow-binary pkgbase
 ```
 
-Update released versions only when corresponding artifacts are ready to publish.
-Regenerate the website/README listings and check for drift:
+After successful binary publication, verify the public artifacts and repository
+installation. Then update `published_version` in the manifest and record the
+release. Do not record a build, staging upload or failed publication as a release.
+The command below only records local data; it does not upload or verify artifacts.
 
 ```bash
-python3 scripts/catalog.py
-python3 scripts/catalog.py --check
+python3 scripts/catalog.py --record-release pkgbase version-pkgrel
+npm --prefix site run build
+npm --prefix site run check
 ```
+
+The release command appends to `packages/arch/releases.json`. It requires the
+manifest's published version and binary approval. Repeating the command for the
+same package/version does not add another entry. Dates default to the local
+calendar date; use `--released-on YYYY-MM-DD` to record an earlier verified
+publication. Keep entries in publication order; the newest entry wins date ties.
+The home page shows the latest five recorded releases for current binary targets.
+Older publication dates are not guessed from Git or local recipe versions.
+For the initial history backfill only, the owner approved 2026-10-30 as the
+fallback date for Cliamp, Monstar and Strata. Their original publication dates
+were not confirmed. Their entries precede the three confirmed publications.
+There is no binary-upload script yet. A future publisher must run this command
+only after its public verification succeeds. Recording a release does not deploy
+the website; that action still needs explicit approval.
 
 Manifest approval never replaces the owner's explicit confirmation for a public
 action. Keep package signing keys outside build environments and web roots.

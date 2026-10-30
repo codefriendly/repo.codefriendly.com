@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "description": "Static CodeFriendly repository website",
   "scripts": {
-    "build": "tailwindcss -i ./styles.css -o ./assets/site.css --minify",
-    "watch": "tailwindcss -i ./styles.css -o ./assets/site.css --watch"
+    "build": "node ./build.mjs",
+    "check": "node ./build.mjs --check",
+    "watch": "tailwindcss -i ./styles.css -o ./dist/assets/site.css --watch"
   },
   "engines": {
     "node": ">=20"

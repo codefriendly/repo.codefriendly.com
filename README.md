@@ -38,13 +38,16 @@ Versions here may differ from those published in Arch repositories or the AUR.
 
 Publication targets and released versions are recorded in
 [`packages/arch/manifest.toml`](packages/arch/manifest.toml). Regenerate the site
-and this table with `python3 scripts/catalog.py`; check them with
-`python3 scripts/catalog.py --check`.
+and this table with `npm --prefix site run build`; check the generated HTML,
+README table and CSS with `npm --prefix site run check`. See the
+[website build instructions](site/README.md) for prerequisites and templates.
 
 ## Repository website
 
-The static landing-page source lives in [`site/`](site/README.md). It documents
-setup and downloads under <https://repo.codefriendly.com/arch/x86_64/>.
+The Jinja templates and source assets live in [`site/`](site/README.md).
+Build output goes into ignored `site/dist/` for preview and deployment.
+The home page documents repository setup. The Packages page has separate
+repository and AUR sections, with downloads, signatures and source links.
 Page publication is separate from package publication and requires explicit approval.
 
 ## Contributing

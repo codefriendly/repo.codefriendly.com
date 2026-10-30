@@ -6,6 +6,7 @@ new_ver.json
 
 # Website build dependencies
 /site/node_modules/
+/site/dist/
 
 # makepkg outputs in Arch package directories
 /packages/arch/*/src/

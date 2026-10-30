@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @import "./theme.css";
-@source "./index.html";
+@source "./dist/index.html";
+@source "./dist/packages.html";
 
 @layer base {
   :root { @apply scheme-light; }
@@ -24,7 +25,7 @@
   .skip-link { @apply absolute -top-24 left-6 z-10 bg-brand-canvas px-4 py-3 focus:top-4; }
   .masthead { @apply flex flex-wrap items-center justify-between gap-4 py-6 md:py-8; }
   .wordmark { @apply text-lg font-bold tracking-tight text-brand-ink no-underline md:text-xl; }
-  .masthead nav { @apply flex items-center gap-4 text-xs font-semibold sm:gap-8 sm:text-sm; }
+  .masthead nav { @apply flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold sm:gap-x-8 sm:text-sm; }
   .masthead nav a { @apply no-underline hover:underline; }
   .intro { @apply max-w-4xl py-12 md:py-16; }
   .intro h1::after { @apply mt-6 block h-1 w-16 bg-brand-coral; content: ""; }
@@ -33,10 +34,10 @@
   .section-heading { @apply flex flex-wrap items-baseline gap-4; }
   .architecture { @apply font-mono text-sm; }
   .section-intro { @apply mt-4 max-w-prose; }
-  .layout { @apply mt-8 flex flex-col gap-8 md:mt-10 md:grid md:grid-cols-3 lg:gap-16; }
+  .layout { @apply flex flex-col gap-8 md:grid md:grid-cols-3 lg:gap-16; }
   .guide { @apply min-w-0 md:col-span-2; }
-  aside { @apply -order-1 min-w-0 md:order-none; }
-  .guide > h3 { @apply mb-6 text-xl; }
+  aside { @apply min-w-0; }
+  .guide > h3 { @apply mt-8 mb-6 text-xl md:mt-10; }
   .steps { @apply list-decimal pl-6; }
   .steps > li { @apply mb-10; }
   .steps > li::marker { @apply font-semibold text-brand-teal tabular-nums; }
@@ -67,15 +68,25 @@
   .reference:first-child { @apply border-t-0 pt-0; }
   .reference h3 { @apply mb-4; }
   .reference p { @apply text-sm; }
-  .package { @apply border-t border-brand-line py-4; }
-  .package:first-of-type { @apply border-t-0 pt-0; }
-  .package-heading { @apply flex items-baseline justify-between gap-3; }
-  .package a { @apply font-mono text-sm font-semibold; }
+  .reference p + p { @apply mt-2; }
+  .updates li { @apply grid grid-cols-2 gap-x-3 gap-y-1 py-3; }
+  .updates li:first-child { @apply pt-0; }
+  .updates li + li { @apply border-t border-brand-line; }
+  .updates a { @apply font-mono text-sm font-semibold; }
+  .updates .version { @apply text-right; }
+  .updates time { @apply col-span-2 text-xs; }
+  .catalog { @apply mt-10 scroll-mt-6; }
+  .catalog + .catalog { @apply border-t border-brand-line pt-8; }
+  .catalog > h3 { @apply text-2xl; }
+  .catalog-intro { @apply mt-3 mb-6 max-w-prose; }
+  .package { @apply grid scroll-mt-6 gap-3 border-t border-brand-line py-6 md:grid-cols-4 md:gap-8; }
+  .package-heading { @apply flex items-baseline justify-between gap-3 md:flex-col md:justify-start md:gap-2; }
+  .package-heading a { @apply font-mono text-sm font-semibold; }
   .version { @apply font-mono text-xs whitespace-nowrap; }
-  .package p { @apply mt-2; }
-  .package small { @apply mt-2 block text-xs; }
-  .package small a, .package-links a { font: inherit; }
-  .package-links { @apply mt-3; }
+  .package-content { @apply min-w-0 max-w-prose md:col-span-3; }
+  .package-content p + p { @apply mt-3; }
+  .package-links { @apply text-sm leading-7; }
+  .package-content .command { @apply max-w-xl; }
   .reference .command { @apply p-4; }
   .text-link { @apply mt-4 inline-block text-sm font-semibold; }
   .key-name { @apply font-semibold; }

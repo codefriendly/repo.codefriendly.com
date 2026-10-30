@@ -9,16 +9,25 @@ scoped to the relevant package; add other format directories only when needed.
 
 ## Repository website
 
-`site/index.html` is the static repository landing page. Follow `site/README.md`
-when changing it. Styling uses Tailwind with shared tokens in `site/theme.css`
-and reusable components in `site/styles.css`; regenerate tracked `site/assets/site.css`
+`site/templates/index.html.j2` contains repository setup. The packages template
+contains the repository and AUR catalogs. Follow `site/README.md` for site changes.
+Edit templates and source assets, not the ignored output in `site/dist/`.
+The shared base template owns top navigation, anchor links and asset references.
+Styling uses Tailwind with shared tokens in `site/theme.css`
+and reusable components in `site/styles.css`; regenerate `site/dist/assets/site.css`
 with `npm --prefix site run build`. Keep published package versions distinct from
 local source versions. Keep Arch-specific content inside the Arch Linux section.
-Deploy only the HTML page and compiled stylesheet, not source CSS, dependencies,
-or development docs; obtain explicit confirmation before any live website change.
-Listings are generated
-from `packages/arch/manifest.toml` with `python3 scripts/catalog.py`; use `--check`
-to detect stale generated content.
+Build and check before deployment. Deploy only the contents of `site/dist/`,
+not templates, build scripts, source CSS, dependencies or development docs.
+Obtain explicit confirmation before any live website change.
+Package data comes from `packages/arch/manifest.toml` and `.SRCINFO`.
+After a verified binary publication, record its released manifest version with
+`python3 scripts/catalog.py --record-release <pkgbase> <version-pkgrel>`.
+This updates `packages/arch/releases.json` for the recent-updates sidebar.
+Never record a build or failed publication as a release. See `MAINTAINING.md`.
+Run `npm --prefix site run build` to render both pages, update the README table
+and compile CSS. Run `npm --prefix site run check` to detect stale output
+without writing files. The build needs uv, Python 3.11+, Node.js 20+ and npm.
 
 ## Publication targets
 

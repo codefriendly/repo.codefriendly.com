@@ -1,0 +1,49 @@
+{% extends "base.html.j2" %}
+{% block title %}Packages{% endblock %}
+{% block description %}Browse CodeFriendly's signed Arch Linux packages and separately maintained AUR recipes, with downloads, signatures and sources.{% endblock %}
+{% block content %}
+    <div class="intro">
+      <h1>Packages.</h1>
+      <p>Signed repository packages and AUR recipes. Each section shows how to install its packages and where to find the sources.</p>
+    </div>
+    <section id="arch" aria-labelledby="arch-title">
+      <div class="section-heading">
+        <h2 id="arch-title">Arch Linux</h2>
+        <span class="architecture">x86_64</span>
+      </div>
+      <p class="section-intro">This is an independent, third-party repository. It is not an official Arch Linux repository.</p>
+      <section id="binary-repository" class="catalog" aria-labelledby="binary-title">
+        <h3 id="binary-title">Repository packages</h3>
+        <p class="catalog-intro">Ready to install with pacman. <a href="./#arch">Set up the repository and check the signing key</a> before installing.</p>
+{% for package in binary_packages %}
+        <article class="package" id="package-{{ package.name }}">
+          <div class="package-heading">
+            <h4><a href="{{ package.download }}">{{ package.name }}</a></h4>
+            <span class="version">{{ package.version }}</span>
+          </div>
+          <div class="package-content">
+            <p>{{ package.description }}</p>
+            <p class="package-links"><a href="{{ package.download }}">Download</a> · <a href="{{ package.download }}.sig">Signature</a>{% if package.source_archive %} · <a href="{{ package.source_archive }}">Source archive</a>{% endif %} · <a href="{{ package.packaging_source }}">Packaging source</a> · <a href="{{ package.upstream }}">Upstream project</a></p>
+          </div>
+        </article>
+{% endfor %}
+      </section>
+      <section id="aur" class="catalog" aria-labelledby="aur-title">
+        <h3 id="aur-title">AUR packages</h3>
+        <p class="catalog-intro">Maintained on AUR by CodeFriendly. Build locally; these binaries are not hosted in our repository.</p>
+{% for package in aur_packages %}
+        <article class="package">
+          <div class="package-heading"><h4><a href="https://aur.archlinux.org/packages/{{ package.name }}">{{ package.name }}</a></h4></div>
+          <div class="package-content">
+            <p>{{ package.description }}</p>
+            <p class="note">Maintained by CodeFriendly on AUR. Build locally; no binary hosted here.</p>
+            <p class="package-links"><a href="{{ package.packaging_source }}">Packaging source</a> · <a href="{{ package.upstream }}">Upstream project</a></p>
+            <div class="command" data-copy-label="{{ package.name }} AUR installation command"><pre><code>paru -S {{ package.name }}</code></pre></div>
+            <p class="note">Requires the paru AUR helper. Review the recipe before building, or <a href="https://wiki.archlinux.org/title/Arch_User_Repository#Installing_and_upgrading_packages">build manually</a>.</p>
+            <p class="note">{{ package.reason }}</p>
+          </div>
+        </article>
+{% endfor %}
+      </section>
+    </section>
+{% endblock %}

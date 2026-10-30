@@ -1,0 +1,88 @@
+{% extends "base.html.j2" %}
+{% block title %}Repository setup{% endblock %}
+{% block description %}Set up the signed CodeFriendly Arch Linux repository and verify the signing key.{% endblock %}
+{% block content %}
+    <div class="intro">
+      <h1>CodeFriendly packages.</h1>
+      <p>Set up the signed repository, then <a href="./packages.html">browse packages and their sources</a>.</p>
+    </div>
+    <section id="arch" aria-labelledby="arch-title">
+      <div class="layout">
+        <div class="guide">
+          <div class="section-heading">
+            <h2 id="arch-title">Arch Linux</h2>
+            <span class="architecture">x86_64</span>
+          </div>
+          <p class="section-intro">Follow these steps to install signed binaries with pacman. AUR packages use a separate local build process.</p>
+          <h3>Install from the binary repository</h3>
+          <ol class="steps">
+            <li>
+              <h4>Download and check the signing key</h4>
+              <p>Download the public key and display its fingerprint.</p>
+              <div class="command" data-copy-label="key verification command" data-copy-mode="lines"><pre><code>curl -fSLo codefriendly-repo.asc https://repo.codefriendly.com/arch/codefriendly-repo.asc
+gpg --show-keys --with-fingerprint codefriendly-repo.asc</code></pre></div>
+              <p class="note">Check that the full fingerprint matches this value before continuing:</p>
+              <code class="fingerprint" tabindex="0" aria-label="Expected signing-key fingerprint">AFA2 FD35 394F 39A7 61B7 83E5 7695 B10F 4DFB 18FE</code>
+            </li>
+            <li>
+              <h4>Trust the repository key</h4>
+              <p>Only do this if you trust CodeFriendly to provide software for your system.</p>
+              <div class="command" data-copy-label="key trust command" data-copy-mode="lines"><pre><code>sudo pacman-key --add codefriendly-repo.asc
+sudo pacman-key --lsign-key AFA2FD35394F39A761B783E57695B10F4DFB18FE</code></pre></div>
+            </li>
+            <li>
+              <h4>Add the repository</h4>
+              <p>Add this block to <code>/etc/pacman.conf</code>, below your existing repositories.</p>
+              <div class="command" data-copy-label="pacman repository configuration"><pre><code>[codefriendly]
+SigLevel = Required DatabaseRequired
+Server = https://repo.codefriendly.com/arch/$arch</code></pre></div>
+              <p class="note">Pacman checks both package and repository database signatures.</p>
+            </li>
+            <li>
+              <h4>Update and install</h4>
+              <p>Refresh the repositories, upgrade your system, and install cliamp.</p>
+              <div class="command" data-copy-label="cliamp installation command"><pre><code>sudo pacman -Syu cliamp</code></pre></div>
+              <p class="note">Choose other packages from the <a href="./packages.html#binary-repository">repository catalog</a>.</p>
+              <p class="note">Debug packages are not hosted. You can build them locally from the packaging source if needed.</p>
+            </li>
+          </ol>
+        </div>
+        <aside aria-label="Arch repository reference">
+{% if recent_releases %}
+          <section class="reference" aria-labelledby="updates-title">
+            <h3 id="updates-title">Recent updates</h3>
+            <ul class="updates">
+{% for release in recent_releases %}
+              <li>
+                <a href="./packages.html#package-{{ release.name }}">{{ release.name }}</a>
+                <span class="version">{{ release.version }}</span>
+                <time datetime="{{ release.date }}">{{ release.date }}</time>
+              </li>
+{% endfor %}
+            </ul>
+          </section>
+{% endif %}
+          <section class="reference" aria-labelledby="packages-title">
+            <h3 id="packages-title">Find a package</h3>
+            <p><a href="./packages.html#binary-repository">Repository packages</a> are ready to install with pacman.</p>
+            <p><a href="./packages.html#aur">AUR packages</a> must be built locally.</p>
+          </section>
+          <section class="reference" aria-labelledby="signing-title">
+            <h3 id="signing-title">Signing key</h3>
+            <p class="key-name">CodeFriendly Repository</p>
+            <p><a href="mailto:repo@c11.dev">repo@c11.dev</a></p>
+            <p class="key-meta">Ed25519 · expires 28 October 2031</p>
+            <details class="key-check">
+              <summary>Show full fingerprint</summary>
+              <code class="fingerprint" tabindex="0">AFA2FD35394F39A761B783E57695B10F4DFB18FE</code>
+            </details>
+            <a class="text-link" href="https://repo.codefriendly.com/arch/codefriendly-repo.asc" download>Download public key</a>
+          </section>
+          <section class="reference" aria-labelledby="about-title">
+            <h3 id="about-title">Before you install</h3>
+            <p>This is an independent, third-party repository. It is not an official Arch Linux repository.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+{% endblock %}

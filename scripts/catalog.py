@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Render the Arch package listings, or check an explicit publication target."""
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["jinja2==3.1.6"]
+# ///
+"""Render the static website and README, or check a publication target."""
 
 import argparse
-import html
+from datetime import date
+import json
 from pathlib import Path
 import re
 import sys
@@ -12,6 +17,18 @@ ROOT = Path(__file__).resolve().parent.parent
 ARCH = ROOT / "packages" / "arch"
 SOURCE = "https://github.com/codefriendly/repo.codefriendly.com/tree/main/packages/arch"
 SERVER = "https://repo.codefriendly.com/arch"
+
+
+def releases():
+    entries = json.loads((ARCH / "releases.json").read_text())
+    seen = set()
+    for entry in entries:
+        date.fromisoformat(entry["date"])
+        key = (entry["name"], entry["version"])
+        if key in seen or not re.fullmatch(r"[A-Za-z0-9._+~-]+", entry["version"]):
+            raise ValueError(f"Duplicate or invalid release: {key}")
+        seen.add(key)
+    return entries
 
 
 def manifest():
@@ -44,47 +61,52 @@ def upstream(name):
     raise ValueError(f"Missing upstream URL for {name}")
 
 
-def binary_catalog(records):
-    rows = []
-    for name, record in sorted(records.items()):
-        if not record["binary_repo"]:
-            continue
-        version = html.escape(record["published_version"])
-        architecture = record["architecture"]
-        names = [name, name + "-debug"] if record.get("debug_package") else [name]
-        source_link = ""
-        if record.get("source_archive", False):
-            source_link = f' · <a href="{SERVER}/sources/{name}-{record["published_version"]}.src.tar.zst">Source archive</a>'
-        for package in names:
-            description = record.get("description", "") if package == name else f"Debugging symbols for {name}."
-            artifact = f"{SERVER}/{architecture}/{package}-{record['published_version']}-{architecture}.pkg.tar.zst"
-            rows.append(f'''            <div class="package">
-              <div class="package-heading">
-                <a href="{html.escape(artifact)}">{html.escape(package)}</a>
-                <span class="version">{version}</span>
-              </div>
-              <p>{html.escape(description)}</p>
-              <small><a href="{html.escape(artifact)}.sig">Signature</a>{source_link}</small>
-            </div>''')
-        rows.append(f'''            <p class="package-links"><a href="{SOURCE}/{name}">Packaging source</a> · <a href="{html.escape(upstream(name))}">Upstream project</a></p>''')
-    return "\n".join(rows)
+def site_pages(records):
+    from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-
-def aur_catalog(records):
-    rows = []
+    environment = Environment(
+        loader=FileSystemLoader(ROOT / "site" / "templates"),
+        autoescape=True,
+        undefined=StrictUndefined,
+        keep_trailing_newline=True,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    binary_packages, aur_packages = [], []
     for name, record in sorted(records.items()):
-        if not record["aur_maintainer"]:
+        if not (record["binary_repo"] or record["aur_maintainer"]):
             continue
-        rows.append(f'''            <div class="package">
-              <div class="package-heading"><a href="https://aur.archlinux.org/packages/{name}">{html.escape(name)}</a></div>
-              <p>{html.escape(record.get('description', ''))}</p>
-              <p class="note">Maintained by CodeFriendly on AUR. Build locally; no binary hosted here.</p>
-              <small><a href="{SOURCE}/{name}">Packaging source</a> · <a href="{html.escape(upstream(name))}">Upstream project</a></small>
-              <div class="command" data-copy-label="{html.escape(name)} AUR installation command"><pre><code>paru -S {html.escape(name)}</code></pre></div>
-              <p class="note">Requires the paru AUR helper. Review the recipe before building, or <a href="https://wiki.archlinux.org/title/Arch_User_Repository#Installing_and_upgrading_packages">build manually</a>.</p>
-              <p class="note">{html.escape(record.get('reason', ''))}</p>
-            </div>''')
-    return "\n".join(rows)
+        package = {
+            "name": name,
+            "description": record.get("description", ""),
+            "packaging_source": f"{SOURCE}/{name}",
+            "upstream": upstream(name),
+            "reason": record.get("reason", ""),
+        }
+        if record["aur_maintainer"]:
+            aur_packages.append(package)
+        if record["binary_repo"]:
+            version, architecture = record["published_version"], record["architecture"]
+            names = [name, name + "-debug"] if record.get("debug_package") else [name]
+            for binary in names:
+                binary_packages.append({
+                    **package,
+                    "name": binary,
+                    "version": version,
+                    "description": package["description"] if binary == name else f"Debugging symbols for {name}.",
+                    "download": f"{SERVER}/{architecture}/{binary}-{version}-{architecture}.pkg.tar.zst",
+                    "source_archive": f"{SERVER}/sources/{name}-{version}.src.tar.zst" if record.get("source_archive") else None,
+                })
+    recent = sorted(
+        (entry for entry in reversed(releases()) if records.get(entry["name"], {}).get("binary_repo")),
+        key=lambda entry: entry["date"], reverse=True,
+    )[:5]
+    return {
+        ROOT / "site" / "dist" / name: environment.get_template(name + ".j2").render(
+            binary_packages=binary_packages, aur_packages=aur_packages, recent_releases=recent,
+        )
+        for name in ("index.html", "packages.html")
+    }
 
 
 def readme_catalog(records):
@@ -109,31 +131,46 @@ def replace_block(text, marker, content):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     action = parser.add_mutually_exclusive_group()
-    action.add_argument("--check", action="store_true", help="Check generated listings without changing files")
+    action.add_argument("--check", action="store_true", help="Check generated pages and README without changing files")
     action.add_argument("--allow-aur", metavar="PKGBASE", help="Exit successfully only for an approved AUR maintainer target")
     action.add_argument("--allow-binary", metavar="PKGBASE", help="Exit successfully only for an approved binary target")
+    action.add_argument("--record-release", nargs=2, metavar=("PKGBASE", "VERSION"), help="Record a verified binary publication; does not publish or render")
+    parser.add_argument("--released-on", type=date.fromisoformat, help="Publication date (YYYY-MM-DD); defaults to today")
     args = parser.parse_args()
+    if args.released_on and not args.record_release:
+        parser.error("--released-on requires --record-release")
     records = manifest()
+    if args.record_release:
+        name, version = args.record_release
+        record = records.get(name, {})
+        if not record.get("binary_repo") or record.get("published_version") != version:
+            raise ValueError("Release must match an approved package's published_version")
+        released_on = args.released_on or date.today()
+        if released_on > date.today():
+            raise ValueError("Publication date cannot be in the future")
+        entries = releases()
+        if not any(entry["name"] == name and entry["version"] == version for entry in entries):
+            entries.append({"name": name, "version": version, "date": released_on.isoformat()})
+            (ARCH / "releases.json").write_text(json.dumps(entries, indent=2) + "\n")
+        return 0
     for name, target in ((args.allow_aur, "aur_maintainer"), (args.allow_binary, "binary_repo")):
         if name is not None:
             if records.get(name, {}).get(target) is not True:
                 print(f"Refusing {target} publication for {name}: not opted in by packages/arch/manifest.toml", file=sys.stderr)
                 return 1
             return 0
-    page = ROOT / "site" / "index.html"
     readme = ROOT / "README.md"
-    original_page = page.read_text()
-    rendered_page = replace_block(original_page, "binary-catalog", binary_catalog(records))
-    rendered_page = replace_block(rendered_page, "aur-catalog", aur_catalog(records))
-    original_readme = readme.read_text()
-    rendered_readme = replace_block(original_readme, "package-catalog", readme_catalog(records))
+    rendered = site_pages(records)
+    rendered[readme] = replace_block(readme.read_text(), "package-catalog", readme_catalog(records))
     stale = False
-    for path, old, new in ((page, original_page, rendered_page), (readme, original_readme, rendered_readme)):
+    for path, new in rendered.items():
+        old = path.read_text() if path.exists() else None
         if old != new:
             if args.check:
-                print(f"Out-of-date catalog: {path.relative_to(ROOT)}", file=sys.stderr)
+                print(f"Out-of-date generated file: {path.relative_to(ROOT)}", file=sys.stderr)
                 stale = True
             else:
+                path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(new)
                 print(f"Updated {path.relative_to(ROOT)}")
     return int(stale)

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-for tool in git makepkg python3; do
+for tool in git makepkg python3 uv; do
   command -v "$tool" >/dev/null || { echo "Missing test prerequisite: $tool" >&2; exit 1; }
 done
 [[ $EUID -ne 0 ]] || { echo 'Run these tests as an unprivileged user.' >&2; exit 1; }
@@ -127,8 +127,10 @@ printf 'PASS: stale SRCINFO rejected\n'
 
 # Source links follow the published version, not the local recipe version.
 mkdir site
-printf '<!-- binary-catalog:start --><!-- binary-catalog:end -->\n<!-- aur-catalog:start --><!-- aur-catalog:end -->\n' > site/index.html
+cp -r "$repo_root/site/templates" site/
+cp "$repo_root/scripts/catalog.py.lock" scripts/
 printf '<!-- package-catalog:start --><!-- package-catalog:end -->\n' > README.md
+cp -r packages/arch/layout-fixture packages/arch/aur-fixture
 cat > packages/arch/manifest.toml <<'MANIFEST'
 [layout-fixture]
 binary_repo = true
@@ -136,11 +138,75 @@ aur_maintainer = false
 published_version = "2.4.0-3"
 architecture = "aarch64"
 source_archive = true
+description = 'A <tool> & helper'
+
+[aur-fixture]
+binary_repo = false
+aur_maintainer = true
+description = 'AUR-only fixture'
 MANIFEST
-python3 scripts/catalog.py
-python3 scripts/catalog.py --check
-grep -Fq 'href="https://repo.codefriendly.com/arch/sources/layout-fixture-2.4.0-3.src.tar.zst">Source archive</a>' site/index.html
+printf '[]\n' > packages/arch/releases.json
+expect_failure uv run --locked scripts/catalog.py --check
+[[ ! -e site/dist ]]
+uv run --locked scripts/catalog.py
+uv run --locked scripts/catalog.py --check
+grep -Fq 'A &lt;tool&gt; &amp; helper' site/dist/packages.html
+grep -Fq 'href="https://aur.archlinux.org/packages/aur-fixture"' site/dist/packages.html
+! sed -n '/<section id="binary-repository"/,/<section id="aur"/p' site/dist/packages.html | grep -Fq 'aur-fixture'
+grep -Fq 'href="https://repo.codefriendly.com/arch/sources/layout-fixture-2.4.0-3.src.tar.zst">Source archive</a>' site/dist/packages.html
+printf '\nStale output\n' >> site/dist/index.html
+cp site/dist/index.html "$tmp/stale-index.html"
+expect_failure uv run --locked scripts/catalog.py --check
+cmp site/dist/index.html "$tmp/stale-index.html"
 sed -i 's/source_archive = true/source_archive = false/' packages/arch/manifest.toml
-python3 scripts/catalog.py
-[[ $(grep -c 'Source archive' site/index.html) == 0 ]]
-printf 'PASS: source archives are opt-in and use the published version\n'
+uv run --locked scripts/catalog.py
+uv run --locked scripts/catalog.py --check
+[[ $(grep -c 'Source archive' site/dist/packages.html) == 0 ]]
+printf 'PASS: site generation escapes text, separates AUR packages, detects stale output without writes, and preserves source archive opt-in/version rules\n'
+
+# Recording requires a released manifest version; retries must not duplicate it.
+! grep -q 'id="updates-title"' site/dist/index.html
+expect_failure python3 scripts/catalog.py --record-release aur-fixture 1.0-1
+expect_failure python3 scripts/catalog.py --record-release layout-fixture 9.9-1
+expect_failure python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --released-on 2999-01-01
+python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --released-on 2026-01-02
+cp packages/arch/releases.json "$tmp/releases.json"
+python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --released-on 2026-01-02
+cmp packages/arch/releases.json "$tmp/releases.json"
+uv run --locked scripts/catalog.py
+grep -q 'href="./packages.html#package-layout-fixture"' site/dist/index.html
+grep -q 'id="package-layout-fixture"' site/dist/packages.html
+
+# Newest dates win over file order; same-day releases use reverse insertion order.
+cat > packages/arch/releases.json <<'RELEASES'
+[
+  {"name":"layout-fixture", "version":"1-1", "date":"2026-01-01"},
+  {"name":"layout-fixture", "version":"6-1", "date":"2026-01-06"},
+  {"name":"layout-fixture", "version":"2-1", "date":"2026-01-02"},
+  {"name":"layout-fixture", "version":"3-1", "date":"2026-01-03"},
+  {"name":"aur-fixture", "version":"9-1", "date":"2026-01-09"},
+  {"name":"layout-fixture", "version":"4-1", "date":"2026-01-04"},
+  {"name":"layout-fixture", "version":"5-1", "date":"2026-01-06"}
+]
+RELEASES
+uv run --locked scripts/catalog.py
+python3 - <<'PY'
+from pathlib import Path
+from html.parser import HTMLParser
+class Updates(HTMLParser):
+    active = False
+    versions = []
+    def handle_starttag(self, tag, attrs):
+        if tag == 'ul' and ('class', 'updates') in attrs:
+            self.active = True
+    def handle_endtag(self, tag):
+        if tag == 'ul':
+            self.active = False
+    def handle_data(self, data):
+        if self.active and data.endswith('-1'):
+            self.versions.append(data)
+parser = Updates()
+parser.feed(Path('site/dist/index.html').read_text())
+assert parser.versions == ['5-1', '6-1', '4-1', '3-1', '2-1'], parser.versions
+PY
+printf 'PASS: recent releases are validated, retry-safe, limited to five and sorted by publication date\n'
