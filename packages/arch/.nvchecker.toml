@@ -72,7 +72,7 @@ source = "regex"
 url = "https://www.rarlab.com/download.htm"
 regex = 'RAR for Linux x64 ([0-9]+\.[0-9]+)</b>'
 
-[remanager-bin]
+[remanager]
 source = "github"
 github = "rmitchellscott/reManager"
 use_latest_release = true
