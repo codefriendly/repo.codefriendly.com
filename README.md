@@ -17,7 +17,9 @@ Inclusion does not imply that CodeFriendly is the current AUR maintainer.
 | Package | Install method | Command |
 | --- | --- | --- |
 | [cliamp](packages/arch/cliamp) | Signed binary repository | `sudo pacman -S cliamp` |
+| [herdr](packages/arch/herdr) | Signed binary repository | `sudo pacman -S herdr` |
 | [herdr-core](packages/arch/herdr-core) | Signed binary repository | `sudo pacman -S herdr-core` |
+| [herdr-desktop](packages/arch/herdr-desktop) | Signed binary repository | `sudo pacman -S herdr-desktop` |
 | [monstar](packages/arch/monstar) | Signed binary repository | `sudo pacman -S monstar` |
 | [pangolin](packages/arch/pangolin) | Signed binary repository | `sudo pacman -S pangolin` |
 | [remanager](packages/arch/remanager) | Signed binary repository | `sudo pacman -S remanager` |
