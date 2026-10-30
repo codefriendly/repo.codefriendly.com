@@ -23,8 +23,7 @@ Jinja and its dependency are pinned in `scripts/catalog.py.lock`. The build uses
 
 ## Source files
 
-- `packages/arch/manifest.toml`: package descriptions, publication targets, released versions and source-archive availability. This is the package catalog's source of truth.
-- `packages/arch/releases.json`: verified binary publications for the home page's recent-updates list. The newest five appear above the signing details on desktop and below the setup guide on mobile. Entries link to package anchors. An empty history hides the list.
+- `packages/arch/manifest.toml`: package descriptions, publication targets, latest released versions, publication timestamps and source-archive availability. This is the catalog's source of truth. The sidebar shows the five packages with the newest `published_at` timestamps, one entry per package. It uses each package's `published_version` and links to its catalog anchor. No release history is kept. The list is hidden when no binary package has a timestamp.
 - `packages/arch/<pkgbase>/.SRCINFO`: upstream project URLs. The generator reads this metadata without executing recipes.
 - `templates/base.html.j2`: shared head, top anchor navigation, footer and asset references.
 - `templates/index.html.j2`: setup guide and signing details.
@@ -55,7 +54,7 @@ To check reproducibility, save checksums for the files in `dist/`, rebuild, and 
 ## Content maintenance
 
 - After a package release, update its entry in `packages/arch/manifest.toml`, then run `npm --prefix site run build` and `npm --prefix site run check`. Do not add package rows by hand. For HTML/README generation alone, use `uv run --locked scripts/catalog.py`; add `--check` to compare without writing files.
-- After public verification, record the release with `python3 scripts/catalog.py --record-release pkgbase version-pkgrel` before building the site. Follow `MAINTAINING.md` for dates and publication order. This local command does not publish anything. Do not infer release dates from Git commits or builds.
+- After public verification, record the release with `python3 scripts/catalog.py --record-release pkgbase version-pkgrel` before building the site. This replaces the package's published version and timestamp in the manifest. Follow `MAINTAINING.md` for timestamp handling. This local command does not publish anything. Do not infer release dates from Git commits or builds.
 - Keep package versions and download URLs synchronized with the published repository, not simply the packaging source tree.
 - Separate ready-to-install binaries from AUR/self-build recipes. Sononym is AUR-only; no Sononym or debug binaries are hosted.
 - Keep every Arch-specific instruction, artifact link, and signing-key reference inside the Arch Linux section.

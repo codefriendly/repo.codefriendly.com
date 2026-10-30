@@ -6,8 +6,7 @@
 """Render the static website and README, or check a publication target."""
 
 import argparse
-from datetime import date
-import json
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import sys
@@ -17,18 +16,6 @@ ROOT = Path(__file__).resolve().parent.parent
 ARCH = ROOT / "packages" / "arch"
 SOURCE = "https://github.com/codefriendly/repo.codefriendly.com/tree/main/packages/arch"
 SERVER = "https://repo.codefriendly.com/arch"
-
-
-def releases():
-    entries = json.loads((ARCH / "releases.json").read_text())
-    seen = set()
-    for entry in entries:
-        date.fromisoformat(entry["date"])
-        key = (entry["name"], entry["version"])
-        if key in seen or not re.fullmatch(r"[A-Za-z0-9._+~-]+", entry["version"]):
-            raise ValueError(f"Duplicate or invalid release: {key}")
-        seen.add(key)
-    return entries
 
 
 def manifest():
@@ -50,6 +37,10 @@ def manifest():
         for flag in ("debug_package", "source_archive"):
             if type(record.get(flag, False)) is not bool:
                 raise ValueError(f"{name}: {flag} must be boolean")
+        if "published_at" in record:
+            timestamp = record["published_at"]
+            if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+                raise ValueError(f"{name}: published_at must be a timestamp with a timezone")
     return records
 
 
@@ -97,10 +88,13 @@ def site_pages(records):
                     "download": f"{SERVER}/{architecture}/{binary}-{version}-{architecture}.pkg.tar.zst",
                     "source_archive": f"{SERVER}/sources/{name}-{version}.src.tar.zst" if record.get("source_archive") else None,
                 })
-    recent = sorted(
-        (entry for entry in reversed(releases()) if records.get(entry["name"], {}).get("binary_repo")),
-        key=lambda entry: entry["date"], reverse=True,
-    )[:5]
+    recent = [
+        {"name": name, "version": record["published_version"], "date": record["published_at"].date().isoformat()}
+        for name, record in sorted(
+            ((name, record) for name, record in records.items() if record["binary_repo"] and "published_at" in record),
+            key=lambda item: (item[1]["published_at"], item[0]), reverse=True,
+        )[:5]
+    ]
     return {
         ROOT / "site" / "dist" / name: environment.get_template(name + ".j2").render(
             binary_packages=binary_packages, aur_packages=aur_packages, recent_releases=recent,
@@ -135,23 +129,28 @@ def main():
     action.add_argument("--allow-aur", metavar="PKGBASE", help="Exit successfully only for an approved AUR maintainer target")
     action.add_argument("--allow-binary", metavar="PKGBASE", help="Exit successfully only for an approved binary target")
     action.add_argument("--record-release", nargs=2, metavar=("PKGBASE", "VERSION"), help="Record a verified binary publication; does not publish or render")
-    parser.add_argument("--released-on", type=date.fromisoformat, help="Publication date (YYYY-MM-DD); defaults to today")
+    parser.add_argument("--published-at", type=datetime.fromisoformat, help="Publication timestamp with timezone; defaults to now in UTC")
     args = parser.parse_args()
-    if args.released_on and not args.record_release:
-        parser.error("--released-on requires --record-release")
+    if args.published_at and not args.record_release:
+        parser.error("--published-at requires --record-release")
     records = manifest()
     if args.record_release:
         name, version = args.record_release
         record = records.get(name, {})
-        if not record.get("binary_repo") or record.get("published_version") != version:
-            raise ValueError("Release must match an approved package's published_version")
-        released_on = args.released_on or date.today()
-        if released_on > date.today():
-            raise ValueError("Publication date cannot be in the future")
-        entries = releases()
-        if not any(entry["name"] == name and entry["version"] == version for entry in entries):
-            entries.append({"name": name, "version": version, "date": released_on.isoformat()})
-            (ARCH / "releases.json").write_text(json.dumps(entries, indent=2) + "\n")
+        if not record.get("binary_repo") or not re.fullmatch(r"[A-Za-z0-9._+~-]+", version):
+            raise ValueError("Release requires an approved binary package and a valid version")
+        timestamp = args.published_at or datetime.now(timezone.utc).replace(microsecond=0)
+        if timestamp.tzinfo is None or timestamp > datetime.now(timezone.utc):
+            raise ValueError("Publication timestamp must have a timezone and cannot be in the future")
+        if record.get("published_version") == version and "published_at" in record:
+            return 0
+        path = ARCH / "manifest.toml"
+        text = path.read_text()
+        pattern = re.compile(r"(?ms)^\[" + re.escape(name) + r"\]\n.*?(?=^\[|\Z)")
+        def update(match):
+            block = re.sub(r'^published_at\s*=.*\n', '', match[0], flags=re.M)
+            return re.sub(r'^published_version\s*=.*$', f'published_version = "{version}"\npublished_at = {timestamp.isoformat()}', block, flags=re.M)
+        path.write_text(pattern.sub(update, text))
         return 0
     for name, target in ((args.allow_aur, "aur_maintainer"), (args.allow_binary, "binary_repo")):
         if name is not None:

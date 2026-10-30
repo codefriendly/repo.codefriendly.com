@@ -291,8 +291,8 @@ python3 scripts/catalog.py --allow-binary pkgbase
 ```
 
 After successful binary publication, verify the public artifacts and repository
-installation. Then update `published_version` in the manifest and record the
-release. Do not record a build, staging upload or failed publication as a release.
+installation. Then record the release. Do not record a build, staging upload or
+failed publication as a release.
 The command below only records local data; it does not upload or verify artifacts.
 
 ```bash
@@ -301,16 +301,19 @@ npm --prefix site run build
 npm --prefix site run check
 ```
 
-The release command appends to `packages/arch/releases.json`. It requires the
-manifest's published version and binary approval. Repeating the command for the
-same package/version does not add another entry. Dates default to the local
-calendar date; use `--released-on YYYY-MM-DD` to record an earlier verified
-publication. Keep entries in publication order; the newest entry wins date ties.
-The home page shows the latest five recorded releases for current binary targets.
+The release command replaces `published_version` and `published_at` in the
+package's manifest table. It requires binary approval. Repeating the command
+for the same version preserves its timestamp. New versions replace the old
+values; no release-history file is kept. Timestamps default to now in UTC.
+Use `--published-at 2026-10-30T20:33:00Z` to supply a verified timestamp.
+The home page shows five distinct packages sorted by their latest publication
+timestamp, with package names in descending order to break exact timestamp ties.
+Packages without a timestamp remain in the catalog but not in recent updates.
 Older publication dates are not guessed from Git or local recipe versions.
-For the initial history backfill only, the owner approved 2026-10-30 as the
+For the initial backfill only, the owner approved 2026-10-30 as the
 fallback date for Cliamp, Monstar and Strata. Their original publication dates
-were not confirmed. Their entries precede the three confirmed publications.
+were not confirmed. The six initial packages use midnight UTC for unknown times;
+this placeholder does not claim a known publication time.
 There is no binary-upload script yet. A future publisher must run this command
 only after its public verification succeeds. Recording a release does not deploy
 the website; that action still needs explicit approval.

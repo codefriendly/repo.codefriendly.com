@@ -1,10 +1,12 @@
 # Publication targets are opt-in. Unlisted recipes are not approved for either target.
 # published_version records a released package, not the latest local recipe version.
+# Initial publication times are unknown; midnight UTC represents date-only backfill.
 
 [cliamp]
 binary_repo = true
 aur_maintainer = false
 published_version = "2.3.0-2"
+published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 description = "A terminal music player inspired by Winamp."
@@ -13,6 +15,7 @@ description = "A terminal music player inspired by Winamp."
 binary_repo = true
 aur_maintainer = false
 published_version = "0.1.15-1"
+published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 description = "A source-built terminal runtime for coding agents, including the hc command."
@@ -21,6 +24,7 @@ description = "A source-built terminal runtime for coding agents, including the 
 binary_repo = true
 aur_maintainer = false
 published_version = "1.0.1-2"
+published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 description = "A Wayland terminal built from source on the Ghostty terminal core."
@@ -29,6 +33,7 @@ description = "A Wayland terminal built from source on the Ghostty terminal core
 binary_repo = true
 aur_maintainer = false
 published_version = "0.19.1-1"
+published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 source_archive = true
@@ -38,6 +43,7 @@ description = "A source-built tunnel client with updates managed by pacman."
 binary_repo = true
 aur_maintainer = false
 published_version = "1.7.4-1"
+published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 source_archive = true
@@ -47,6 +53,7 @@ description = "A source-built mod manager for reMarkable tablets."
 binary_repo = true
 aur_maintainer = false
 published_version = "1.1.1-2"
+published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 source_archive = true

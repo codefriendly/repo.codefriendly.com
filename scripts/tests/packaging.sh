@@ -145,7 +145,6 @@ binary_repo = false
 aur_maintainer = true
 description = 'AUR-only fixture'
 MANIFEST
-printf '[]\n' > packages/arch/releases.json
 expect_failure uv run --locked scripts/catalog.py --check
 [[ ! -e site/dist ]]
 uv run --locked scripts/catalog.py
@@ -164,31 +163,37 @@ uv run --locked scripts/catalog.py --check
 [[ $(grep -c 'Source archive' site/dist/packages.html) == 0 ]]
 printf 'PASS: site generation escapes text, separates AUR packages, detects stale output without writes, and preserves source archive opt-in/version rules\n'
 
-# Recording requires a released manifest version; retries must not duplicate it.
+# Recording updates one package in place; retries preserve its timestamp.
 ! grep -q 'id="updates-title"' site/dist/index.html
 expect_failure python3 scripts/catalog.py --record-release aur-fixture 1.0-1
-expect_failure python3 scripts/catalog.py --record-release layout-fixture 9.9-1
-expect_failure python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --released-on 2999-01-01
-python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --released-on 2026-01-02
-cp packages/arch/releases.json "$tmp/releases.json"
-python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --released-on 2026-01-02
-cmp packages/arch/releases.json "$tmp/releases.json"
+expect_failure python3 scripts/catalog.py --record-release layout-fixture ../invalid
+expect_failure python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --published-at 2999-01-01T00:00:00Z
+expect_failure python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --published-at 2026-01-01T00:00:00
+python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --published-at 2026-01-02T10:00:00Z
+cp packages/arch/manifest.toml "$tmp/manifest.toml"
+python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3
+cmp packages/arch/manifest.toml "$tmp/manifest.toml"
+python3 scripts/catalog.py --record-release layout-fixture 2.4.1-1 --published-at 2026-01-02T11:00:00Z
 uv run --locked scripts/catalog.py
 grep -q 'href="./packages.html#package-layout-fixture"' site/dist/index.html
 grep -q 'id="package-layout-fixture"' site/dist/packages.html
+grep -q 'layout-fixture-2.4.1-1-aarch64.pkg.tar.zst' site/dist/packages.html
+[[ $(grep -c 'href="./packages.html#package-layout-fixture"' site/dist/index.html) == 1 ]]
+! grep -q '2.4.0-3' site/dist/index.html
 
-# Newest dates win over file order; same-day releases use reverse insertion order.
-cat > packages/arch/releases.json <<'RELEASES'
-[
-  {"name":"layout-fixture", "version":"1-1", "date":"2026-01-01"},
-  {"name":"layout-fixture", "version":"6-1", "date":"2026-01-06"},
-  {"name":"layout-fixture", "version":"2-1", "date":"2026-01-02"},
-  {"name":"layout-fixture", "version":"3-1", "date":"2026-01-03"},
-  {"name":"aur-fixture", "version":"9-1", "date":"2026-01-09"},
-  {"name":"layout-fixture", "version":"4-1", "date":"2026-01-04"},
-  {"name":"layout-fixture", "version":"5-1", "date":"2026-01-06"}
-]
-RELEASES
+# Same-day timestamps, not package names or file order, determine the latest five.
+for hour in 3 1 6 2 5 4; do
+  cp -r packages/arch/layout-fixture "packages/arch/recent-$hour"
+  cat >> packages/arch/manifest.toml <<MANIFEST
+
+[recent-$hour]
+binary_repo = true
+aur_maintainer = false
+published_version = "$hour-1"
+published_at = 2026-01-03T0$hour:00:00Z
+architecture = "x86_64"
+MANIFEST
+done
 uv run --locked scripts/catalog.py
 python3 - <<'PY'
 from pathlib import Path
@@ -207,6 +212,6 @@ class Updates(HTMLParser):
             self.versions.append(data)
 parser = Updates()
 parser.feed(Path('site/dist/index.html').read_text())
-assert parser.versions == ['5-1', '6-1', '4-1', '3-1', '2-1'], parser.versions
+assert parser.versions == ['6-1', '5-1', '4-1', '3-1', '2-1'], parser.versions
 PY
-printf 'PASS: recent releases are validated, retry-safe, limited to five and sorted by publication date\n'
+printf 'PASS: latest package publications are validated, retry-safe, unique and sorted by timestamp\n'

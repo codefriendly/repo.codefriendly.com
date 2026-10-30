@@ -21,9 +21,9 @@ Build and check before deployment. Deploy only the contents of `site/dist/`,
 not templates, build scripts, source CSS, dependencies or development docs.
 Obtain explicit confirmation before any live website change.
 Package data comes from `packages/arch/manifest.toml` and `.SRCINFO`.
-After a verified binary publication, record its released manifest version with
+After a verified binary publication, record its version and timestamp with
 `python3 scripts/catalog.py --record-release <pkgbase> <version-pkgrel>`.
-This updates `packages/arch/releases.json` for the recent-updates sidebar.
+This updates the package's `published_version` and `published_at` in the manifest.
 Never record a build or failed publication as a release. See `MAINTAINING.md`.
 Run `npm --prefix site run build` to render both pages, update the README table
 and compile CSS. Run `npm --prefix site run check` to detect stale output
