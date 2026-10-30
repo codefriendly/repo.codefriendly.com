@@ -1,0 +1,78 @@
+--- a/cmd/update/update_unix.go
++++ b/cmd/update/update_unix.go
+@@ -3,52 +3,18 @@
+ package update
+ 
+ import (
+-	"os"
+-	"os/exec"
+-
+-	"github.com/fosrl/cli/internal/logger"
+ 	"github.com/spf13/cobra"
+ )
+ 
+ func UpdateCmd() *cobra.Command {
+ 	cmd := &cobra.Command{
+ 		Use:   "update",
+-		Short: "Update Pangolin CLI to the latest version",
+-		Long:  "Update Pangolin CLI to the latest version by downloading and running the installation script",
++		Short: "Show the package-manager update command",
++		Long:  "This installation is managed by pacman. Run sudo pacman -Syu to update Pangolin.",
+ 		Run: func(cmd *cobra.Command, args []string) {
+-			if err := updateMain(); err != nil {
+-				os.Exit(1)
+-			}
++			cmd.Println("This installation is managed by pacman. Run sudo pacman -Syu to update Pangolin.")
+ 		},
+ 	}
+ 
+ 	return cmd
+ }
+-
+-func updateMain() error {
+-	logger.Info("Updating Pangolin CLI...")
+-
+-	// Get the path of the current running binary
+-	execPath, err := os.Executable()
+-	if err != nil {
+-		logger.Error("Failed to get current executable path: %v", err)
+-		return err
+-	}
+-	
+-	logger.Debug("Current executable path: %s", execPath)
+-
+-	// Execute: curl -fsSL https://static.pangolin.net/get-cli.sh | bash -s -- --path /current/binary/path
+-	updateCmd := exec.Command("sh", "-c", "curl -fsSL https://static.pangolin.net/get-cli.sh | bash -s -- --path "+execPath)
+-	updateCmd.Stdin = os.Stdin
+-	updateCmd.Stdout = os.Stdout
+-	updateCmd.Stderr = os.Stderr
+-
+-	if err := updateCmd.Run(); err != nil {
+-		logger.Error("Failed to update Pangolin CLI: %v", err)
+-		return err
+-	}
+-
+-	logger.Success("Pangolin CLI updated successfully!")
+-
+-	return nil
+-}
+--- a/cmd/version/version.go
++++ b/cmd/version/version.go
+@@ -3,6 +3,7 @@
+ import (
+ 	"fmt"
+ 
++	"github.com/fosrl/cli/internal/config"
+ 	"github.com/fosrl/cli/internal/logger"
+ 	versionpkg "github.com/fosrl/cli/internal/version"
+ 	"github.com/spf13/cobra"
+@@ -24,6 +25,9 @@
+ func versionMain() {
+ 	fmt.Println(versionpkg.Version)
+ 
++	if config.IsExternallyManaged() {
++		return
++	}
+ 	// Check for updates
+ 	latest, err := versionpkg.CheckForUpdate()
+ 	if err != nil {

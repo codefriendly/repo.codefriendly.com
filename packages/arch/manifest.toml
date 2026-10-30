@@ -17,6 +17,15 @@ architecture = "x86_64"
 debug_package = false
 description = "A Wayland terminal built from source on the Ghostty terminal core."
 
+[pangolin]
+binary_repo = true
+aur_maintainer = false
+published_version = "0.19.1-1"
+architecture = "x86_64"
+debug_package = false
+source_archive = true
+description = "A source-built tunnel client with updates managed by pacman."
+
 [strata-fm]
 binary_repo = true
 aur_maintainer = false

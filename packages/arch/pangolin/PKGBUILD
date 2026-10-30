@@ -1,0 +1,96 @@
+# Packaging based on pangolin-bin by vbopk9x3 <vbopk9x3@4wrd.cc>.
+pkgname=pangolin
+pkgver=0.19.1
+pkgrel=1
+pkgdesc='Tunnel client for secure reverse proxy access'
+arch=('x86_64' 'aarch64')
+url='https://github.com/fosrl/cli'
+license=('AGPL-3.0-only' 'MIT' 'BSD-2-Clause' 'BSD-3-Clause' 'Apache-2.0' 'ISC' 'Unicode-3.0')
+depends=('ca-certificates' 'glibc')
+optdepends=('sudo: start a tunnel as an unprivileged user'
+            'systemd: manage persistent tunnels as system services'
+            'openssh: SSH and SCP commands')
+makedepends=('go' 'git')
+conflicts=('pangolin-bin')
+options=('!debug' '!lto')
+source=("cli-$pkgver.tar.gz::$url/archive/refs/tags/$pkgver.tar.gz"
+        'pacman-updates.patch'
+        'README.md'
+        'Unicode-LICENSE.txt::https://www.unicode.org/license.txt')
+sha256sums=('0f4f9b55cb3ef88a452d4a30d1c3969c3c469c3a8a33e3354b2761a581230fe6'
+            'd6ef0ecc211cece73eb81bf2ffc96cae35cad7b2439590afb00f04dab8358c12'
+            '33d79374fa0e9b93e389eb9e77a8c88e6517014be7b93ef77a1c49552759da95'
+            'e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96')
+
+prepare() {
+  cd "cli-$pkgver"
+  patch -Np1 --fuzz=0 -i "$srcdir/pacman-updates.patch"
+  export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=0
+  go mod download
+  go mod verify
+  # Keep complete published module sources as well as the selected vendor tree.
+  cp -a "$GOPATH/pkg/mod/cache/download" module-source
+  GOBIN="$GOPATH/bin" GOFLAGS= go install github.com/google/go-licenses/v2@v2.0.1
+  export GOFLAGS=-mod=readonly
+  "$GOPATH/bin/go-licenses" report . > dependency-licenses.csv
+  "$GOPATH/bin/go-licenses" check . \
+    --allowed_licenses=AGPL-3.0,MIT,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC
+  go list -deps -f '{{with .Module}}{{.Path}}{{"\t"}}{{.Dir}}{{end}}' . \
+    | sort -u > dependency-modules.tsv
+  # Include nested notices. go-licenses save rejects AGPL even after check passes.
+  local module directory file
+  while IFS=$'\t' read -r module directory; do
+    [[ -n $module && $module != github.com/fosrl/cli ]] || continue
+    while IFS= read -r -d '' file; do
+      install -Dm644 "$file" "dependency-licenses/$module/${file#"$directory/"}"
+    done < <(find "$directory" -type f \( -iname 'LICENSE*' -o -iname 'LICENCE*' \
+      -o -iname 'COPYING*' -o -iname 'NOTICE*' -o -iname 'PATENTS*' \
+      -o -iname 'COPYRIGHT*' \) -print0)
+  done < dependency-modules.tsv
+  cp "$srcdir/Unicode-LICENSE.txt" dependency-licenses/Unicode-LICENSE.txt
+  cp /usr/share/licenses/go/LICENSE dependency-licenses/Go-LICENSE
+  go mod vendor
+  # Go makes its module cache read-only; makepkg --clean must be able to remove it.
+  chmod -R u+w "$GOPATH/pkg/mod" module-source
+}
+
+build() {
+  cd "cli-$pkgver"
+  export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=0 GOPROXY=off GOSUMDB=off
+  local newt_version olm_version
+  newt_version=$(go list -mod=vendor -m -f '{{.Version}}' github.com/fosrl/newt)
+  olm_version=$(go list -mod=vendor -m -f '{{.Version}}' github.com/fosrl/olm)
+  go build -mod=vendor -trimpath -buildmode=pie \
+    -ldflags="-X github.com/fosrl/cli/internal/version.Version=$pkgver -X github.com/fosrl/cli/internal/version.NewtVersionOverride=${newt_version#v} -X github.com/fosrl/cli/internal/version.OlmVersionOverride=${olm_version#v} -X github.com/fosrl/cli/internal/config.ManagedBy=pacman" \
+    -o pangolin .
+}
+
+check() {
+  cd "cli-$pkgver"
+  export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=0 GOPROXY=off GOSUMDB=off
+  go test -mod=vendor ./...
+  local test_home output
+  test_home=$(mktemp -d)
+  # The Docker runner uses sudo; do not inherit its original user's HOME lookup.
+  output=$(env -u SUDO_USER HOME="$test_home" ./pangolin version)
+  [[ $output == "$pkgver" ]]
+  output=$(env -u SUDO_USER HOME="$test_home" ./pangolin update 2>&1)
+  [[ $output == 'This installation is managed by pacman. Run sudo pacman -Syu to update Pangolin.' ]]
+  rm -rf "$test_home"
+}
+
+package() {
+  cd "cli-$pkgver"
+  install -Dm755 pangolin "$pkgdir/usr/bin/pangolin"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cp -a dependency-licenses "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$startdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+  local archive="$pkgname-$pkgver-$pkgrel.src.tar.zst"
+  tar --zstd -cf "${PKGDEST:-$startdir}/$archive" \
+    --exclude="cli-$pkgver/pangolin" \
+    -C "$srcdir" "cli-$pkgver" \
+    -C "$startdir" PKGBUILD .SRCINFO README.md pacman-updates.patch \
+    "cli-$pkgver.tar.gz" Unicode-LICENSE.txt
+  (cd "${PKGDEST:-$startdir}" && sha256sum "$archive") \
+    > "${PKGDEST:-$startdir}/$archive.sha256"
+}

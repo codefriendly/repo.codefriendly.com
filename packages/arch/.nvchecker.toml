@@ -53,7 +53,7 @@ github = "janbar/noson-app"
 use_latest_release = true
 prefix = "v"
 
-[pangolin-bin]
+[pangolin]
 source = "github"
 github = "fosrl/cli"
 use_latest_release = true

@@ -18,6 +18,7 @@ Inclusion does not imply that CodeFriendly is the current AUR maintainer.
 | --- | --- | --- |
 | [cliamp](packages/arch/cliamp) | Signed binary repository | `sudo pacman -S cliamp` |
 | [monstar](packages/arch/monstar) | Signed binary repository | `sudo pacman -S monstar` |
+| [pangolin](packages/arch/pangolin) | Signed binary repository | `sudo pacman -S pangolin` |
 | [sononym](packages/arch/sononym) | [AUR — build locally](https://aur.archlinux.org/packages/sononym) | `paru -S sononym` |
 | [strata-fm](packages/arch/strata-fm) | Signed binary repository | `sudo pacman -S strata-fm` |
 <!-- package-catalog:end -->
