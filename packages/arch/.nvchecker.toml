@@ -29,10 +29,24 @@ git = "https://github.com/shlomif/fortune-mod"
 include_regex = 'fortune-mod-\d+\.\d+\.\d+'
 prefix = "fortune-mod-"
 
+[herdr]
+source = "git"
+git = "https://github.com/codefriendly/herdr.git"
+include_regex = 'codefriendly-v\d+\.\d+\.\d+-r\d+'
+prefix = "codefriendly-v"
+from_pattern = '(\d+\.\d+\.\d+)-r(\d+)'
+to_pattern = '\1+codefriendly\2'
+
 [herdr-core]
 source = "regex"
 url = "https://releases.herdr.dev/core/latest.json"
 regex = '"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"'
+
+[herdr-desktop]
+source = "git"
+git = "https://github.com/herdrdev/herdr-app"
+include_regex = 'v\d+\.\d+\.\d+'
+prefix = "v"
 
 [libsoup]
 # Keep the libsoup 2.x ABI; do not select libsoup 3 releases.

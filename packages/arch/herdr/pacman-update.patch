@@ -1,0 +1,43 @@
+From: CodeFriendly
+Date: 2026-10-30
+Subject: Route the local update command to pacman
+
+Modification notice: CodeFriendly changed src/main.rs to keep the local
+update command from replacing the packaged executable. Remote installation
+and other upstream update behavior are unchanged.
+
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -578,7 +578,7 @@
+     }
+
+     if args.get(1).map(|s| s.as_str()) == Some("update") {
+-        let options = match update::parse_self_update_args(&args[2..]) {
++        let _options = match update::parse_self_update_args(&args[2..]) {
+             Ok(options) => options,
+             Err(err) if err.starts_with("usage:") => {
+                 eprintln!("{err}");
+@@ -590,17 +590,12 @@
+                 std::process::exit(2);
+             }
+         };
+-        match update::self_update(options) {
+-            Ok(_) => return Ok(()),
+-            Err(e) => {
+-                if e.starts_with("self-update is disabled") {
+-                    eprintln!("{e}");
+-                } else {
+-                    eprintln!("update failed: {e}");
+-                }
+-                std::process::exit(1);
+-            }
+-        }
++        // Modified by CodeFriendly, 2026-10-30: pacman owns this executable.
++        println!(
++            "This installation of Herdr is managed by the CodeFriendly package repository.\n\
++To update Herdr, run:\n\n  sudo pacman -Syu"
++        );
++        return Ok(());
+     }
+
+     if args.iter().any(|a| a == "--help" || a == "-h") {

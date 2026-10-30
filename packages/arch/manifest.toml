@@ -11,6 +11,13 @@ architecture = "x86_64"
 debug_package = false
 description = "A terminal music player inspired by Winamp."
 
+[herdr]
+binary_repo = true
+aur_maintainer = false
+architecture = "x86_64"
+debug_package = false
+description = "CodeFriendly's source-built Herdr CLI with pane-hover focus and pacman-managed updates."
+
 [herdr-core]
 binary_repo = true
 aur_maintainer = false
@@ -19,6 +26,13 @@ published_at = 2026-10-30T00:00:00Z
 architecture = "x86_64"
 debug_package = false
 description = "A source-built terminal runtime for coding agents, including the hc command."
+
+[herdr-desktop]
+binary_repo = true
+aur_maintainer = false
+architecture = "x86_64"
+debug_package = false
+description = "A source-built desktop workspace for terminals and coding agents, using herdr-core."
 
 [monstar]
 binary_repo = true

@@ -165,6 +165,21 @@ printf 'PASS: site generation escapes text, separates AUR packages, detects stal
 
 # Recording updates one package in place; retries preserve its timestamp.
 ! grep -q 'id="updates-title"' site/dist/index.html
+python3 scripts/catalog.py --sync-package-review
+[[ ! -e PACKAGE-REVIEW.local.md ]]
+cat > PACKAGE-REVIEW.local.md <<'REVIEW'
+Private review findings before.
+<!-- package-publications:start -->
+Stale publication state.
+<!-- package-publications:end -->
+Private review findings after.
+REVIEW
+python3 scripts/catalog.py --sync-package-review
+grep -Fq '| layout-fixture | 2.4.0-3 | Not recorded | No |' PACKAGE-REVIEW.local.md
+grep -Fq '| aur-fixture | Not published in this repository | Not recorded | Yes |' PACKAGE-REVIEW.local.md
+grep -Fxq 'Private review findings before.' PACKAGE-REVIEW.local.md
+grep -Fxq 'Private review findings after.' PACKAGE-REVIEW.local.md
+! grep -q 'Stale publication state' PACKAGE-REVIEW.local.md
 expect_failure python3 scripts/catalog.py --record-release aur-fixture 1.0-1
 expect_failure python3 scripts/catalog.py --record-release layout-fixture ../invalid
 expect_failure python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3 --published-at 2999-01-01T00:00:00Z
@@ -174,6 +189,8 @@ cp packages/arch/manifest.toml "$tmp/manifest.toml"
 python3 scripts/catalog.py --record-release layout-fixture 2.4.0-3
 cmp packages/arch/manifest.toml "$tmp/manifest.toml"
 python3 scripts/catalog.py --record-release layout-fixture 2.4.1-1 --published-at 2026-01-02T11:00:00Z
+grep -Fq '| layout-fixture | 2.4.1-1 | 2026-01-02 | No |' PACKAGE-REVIEW.local.md
+! grep -q '2.4.0-3' PACKAGE-REVIEW.local.md
 uv run --locked scripts/catalog.py
 grep -q 'href="./packages.html#package-layout-fixture"' site/dist/index.html
 grep -q 'id="package-layout-fixture"' site/dist/packages.html
@@ -215,3 +232,23 @@ parser.feed(Path('site/dist/index.html').read_text())
 assert parser.versions == ['6-1', '5-1', '4-1', '3-1', '2-1'], parser.versions
 PY
 printf 'PASS: latest package publications are validated, retry-safe, unique and sorted by timestamp\n'
+
+# Approval permits staging, but only a verified publication adds catalog links.
+cp -r packages/arch/layout-fixture packages/arch/pending-fixture
+cat >> packages/arch/manifest.toml <<'MANIFEST'
+
+[pending-fixture]
+binary_repo = true
+aur_maintainer = false
+architecture = "x86_64"
+MANIFEST
+python3 scripts/catalog.py --allow-binary pending-fixture
+uv run --locked scripts/catalog.py
+! grep -q 'pending-fixture' site/dist/packages.html README.md
+python3 scripts/catalog.py --sync-package-review
+grep -Fq '| pending-fixture | Not published in this repository | Not recorded | No |' PACKAGE-REVIEW.local.md
+python3 scripts/catalog.py --record-release pending-fixture 3.0-2 --published-at 2026-01-04T02:30:00Z
+uv run --locked scripts/catalog.py
+grep -Fq 'pending-fixture-3.0-2-x86_64.pkg.tar.zst' site/dist/packages.html
+grep -Fq '| pending-fixture | 3.0-2 | 2026-01-04 | No |' PACKAGE-REVIEW.local.md
+printf 'PASS: new approved packages stay unlisted until their first verified publication\n'

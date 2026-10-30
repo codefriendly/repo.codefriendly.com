@@ -1,0 +1,108 @@
+# Adapted from herdr-app-bin, maintained by Qingxu <me@linioi.com>.
+pkgname=herdr-desktop
+pkgver=0.1.10
+pkgrel=1
+_commit=36725d47c89cd19345994363d6d9cdee5c42c80b
+_ghosttycommit=291fd050b9e9c293c8adb6a140742649b7e42d3a
+_zigver=0.16.0
+pkgdesc='Native desktop workspace for terminals and coding agents that keep running'
+arch=('x86_64')
+url='https://github.com/herdrdev/herdr-app'
+license=('Apache-2.0' 'MIT' 'BSD-2-Clause' 'BSD-3-Clause' 'ISC' 'Zlib'
+         'Unicode-3.0' 'MPL-2.0' 'OFL-1.1' 'CC-BY-SA-3.0' 'CC-BY-SA-4.0'
+         'CC0-1.0' 'Apache-2.0 WITH LLVM-exception' 'bzip2-1.0.6' 'CDLA-Permissive-2.0')
+depends=('glibc' 'libgcc' 'fontconfig' 'freetype2' 'libxcb' 'libxkbcommon'
+         'libxkbcommon-x11' 'wayland' 'vulkan-icd-loader' 'hicolor-icon-theme'
+         'herdr-core>=0.1.11')
+makedepends=('rust>=1.95.0' 'rust-src' 'clang' 'cmake' 'pkgconf')
+checkdepends=('python' 'bun' 'vulkan-swrast' 'desktop-file-utils')
+optdepends=('vulkan-driver: GPU rendering (required in a desktop session)'
+            'git: repository status and Git actions'
+            'xdg-utils: open links with the default application')
+provides=("herdr-app=$pkgver")
+conflicts=('herdr-app' 'herdr-app-bin' 'herdr-app-desktop-bin')
+options=('!debug' '!lto')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz"
+        "ghostty-$_ghosttycommit.tar.gz::https://github.com/ghostty-org/ghostty/archive/$_ghosttycommit.tar.gz"
+        "https://ziglang.org/download/$_zigver/zig-x86_64-linux-$_zigver.tar.xz"
+        'https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate'
+        'herdr-app.desktop' 'PACKAGING.md' 'pacman-updates.patch')
+noextract=('option-ext-0.2.0.crate')
+sha256sums=('e03d48d1ae545b40f632104b6d10d4a8980a98777ab35d385330144c130ddcc9'
+            'f35b464f1aee22ffda9f6359038b9ad18a784342b4a4fa1cb97a79fb9ade79a4'
+            '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
+            '04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d'
+            '2cc1199525a1bac6364a7397363f96a00db3faaf51aea049f9d4a7f694ef885a'
+            'adfe0bc593fa2d30384b98f3d3a9376fce3685cd98f8e626eeb2f60ba441ac5d'
+            '419c009a5dff916ddab670473ddbd8f914960d1e5bd1e1d63bce055210f5525b')
+
+prepare() {
+  cd "herdr-app-$_commit"
+  patch -Np1 -i "$srcdir/pacman-updates.patch"
+  rmdir vendor/ghostty
+  mv "$srcdir/ghostty-$_ghosttycommit" vendor/ghostty
+  export CARGO_HOME="$srcdir/cargo" ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache"
+  export ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  cargo fetch --locked
+  (cd vendor/ghostty && "$ZIG" build --fetch -Demit-lib-vt -Doptimize=ReleaseFast -Dtarget=x86_64-linux-gnu)
+  # Keep upstream's complete aggregate notices and add the actual toolchain notices.
+  {
+    printf '\n==== Arch Linux build supplements ====\n\n'
+    printf 'PxPlus IBM VGA: The Ultimate Oldschool PC Font Pack, by VileR.\n'
+    printf 'https://int10h.org/oldschool-pc-fonts/ (CC-BY-SA-4.0).\n'
+    printf 'The font is unchanged by this package.\n\n'
+    cat "$srcdir/PACKAGING.md"
+    rustc --version
+    cat /usr/share/licenses/rust/COPYRIGHT-library.html.rustc
+    cat /usr/lib/rustlib/src/rust/library/compiler-builtins/LICENSE.txt
+    cat /usr/lib/rustlib/src/rust/library/compiler-builtins/libm/LICENSE.txt
+    cat "$srcdir/zig-x86_64-linux-$_zigver/LICENSE"
+    local runtime
+    for runtime in libcxx libcxxabi libunwind; do
+      cat "$srcdir/zig-x86_64-linux-$_zigver/lib/$runtime/LICENSE.TXT"
+    done
+  } >> THIRD-PARTY-NOTICES
+}
+
+build() {
+  cd "herdr-app-$_commit"
+  export CARGO_HOME="$srcdir/cargo" CARGO_TARGET_DIR="$srcdir/target"
+  export ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  local -x RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
+  # scripts/package sets this flag to enable upstream self-updates. Do not use it.
+  unset HERDR_APP_RELEASE
+  cargo build --frozen --release --jobs 4
+}
+
+check() {
+  cd "herdr-app-$_commit"
+  export CARGO_HOME="$srcdir/cargo" CARGO_TARGET_DIR="$srcdir/target"
+  export ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  local -x RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
+  unset HERDR_APP_RELEASE
+  # GPUI's debug selectors are required by the upstream popup-layout tests.
+  # Match upstream CI's unoptimized dependency profile; do not skip those tests.
+  CARGO_PROFILE_TEST_DEBUG=1 cargo test --frozen --jobs 4 \
+    --config 'profile.dev.package."*".opt-level=0' -- --test-threads 4
+  bun test scripts/files.test.ts
+  python -m unittest discover -s scripts -p test_distribution.py
+  desktop-file-validate "$srcdir/herdr-app.desktop"
+  [[ $("$srcdir/target/release/herdr-app" --version) == "herdr-app $pkgver" ]]
+  grep -q 'VileR' THIRD-PARTY-NOTICES
+}
+
+package() {
+  cd "herdr-app-$_commit"
+  install -Dm755 "$srcdir/target/release/herdr-app" "$pkgdir/usr/bin/herdr-app"
+  install -Dm644 assets/icons/herdr-ui-icon-clean.svg \
+    "$pkgdir/usr/share/icons/hicolor/scalable/apps/herdr-app.svg"
+  install -Dm644 "$srcdir/herdr-app.desktop" "$pkgdir/usr/share/applications/herdr-app.desktop"
+  install -Dm644 LICENSE THIRD-PARTY-NOTICES -t "$pkgdir/usr/share/licenses/$pkgname/"
+  # Preserve full native and modification notices, not only license identifiers.
+  install -Dm644 vendor/ghostty/pkg/simdutf/vendor/simdutf.h \
+    "$pkgdir/usr/share/licenses/$pkgname/simdutf-third-party-notices.h"
+  # MPL-2.0 section 3.2: deliver the exact unmodified covered source with the binary.
+  install -Dm644 "$srcdir/option-ext-0.2.0.crate" \
+    "$pkgdir/usr/share/licenses/$pkgname/option-ext-0.2.0.crate"
+  install -Dm644 "$srcdir/PACKAGING.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+}

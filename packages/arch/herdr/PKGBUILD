@@ -1,0 +1,93 @@
+# Maintainer: Your Name <you@example.com>
+# Imported from AUR herdr commit 1461f14c3827d2b2f3460dcb1142fda4c169706e.
+# Source build and license review: CodeFriendly, 2026.
+pkgname=herdr
+pkgver=0.9.5+codefriendly1
+pkgrel=2
+_upstreamver=0.9.5
+_commit=78b1b52b6f57ba63a818519e06e6a878d06bb430
+_zigver=0.16.0
+pkgdesc='Terminal workspace manager for AI coding agents (CodeFriendly pane-hover build)'
+arch=('x86_64')
+url='https://github.com/codefriendly/herdr'
+license=('Apache-2.0' 'MIT' 'BSD-3-Clause' 'Unicode-3.0' 'Unicode-DFS-2016'
+         'Apache-2.0 WITH LLVM-exception' 'Zlib' 'CC0-1.0' '0BSD' 'WTFPL')
+depends=('libgcc' 'glibc')
+makedepends=('rust' 'rust-src' 'python')
+checkdepends=('cargo-nextest' 'openssh')
+optdepends=('curl: upstream update checks and remote installation'
+            'git: worktrees and repository status'
+            'openssh: connect to remote machines'
+            'mpv: play notification sounds'
+            'wl-clipboard: clipboard access on Wayland'
+            'xclip: clipboard access on X11')
+conflicts=('herdr-bin')
+options=('!debug' '!lto')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz"
+        "https://ziglang.org/download/$_zigver/zig-x86_64-linux-$_zigver.tar.xz"
+        'simdutf-LICENSE-MIT::https://raw.githubusercontent.com/simdutf/simdutf/v9.0.0/LICENSE-MIT'
+        'ratatui-LICENSE::https://raw.githubusercontent.com/ratatui/ratatui/0a2a7c0363a4806b0cf05c1915bf7cdd438f756c/LICENSE'
+        'vtparse-LICENSE::https://raw.githubusercontent.com/wez/wezterm/edeae72b5fc55c7fa4aa1d08bbefd08c5493f757/LICENSE.md'
+        'wezterm-input-types-LICENSE::https://raw.githubusercontent.com/wez/wezterm/d5ca5509b95edc31291ba29bd1fcbf3f0b12c92d/LICENSE.md'
+        'licenses.py' 'README.md' 'pacman-update.patch')
+sha256sums=('997dcc47dc847e5153a597de09b6a86e29f69c24248d62f8b70a3779e50a8058'
+            '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
+            'fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f'
+            '50eb43e8d742c9c61a9391e42b2184fce54dbd1893a1bb1c85b8c9ee217ab1f5'
+            '37db33bbbd7348969eda397b89a16f252d56c1ca7481b6ccaf56ccdcbab5dcca'
+            '37db33bbbd7348969eda397b89a16f252d56c1ca7481b6ccaf56ccdcbab5dcca'
+            '0f02bcb558d3d7a7311ee78dad56ac0db66c9943132adf816d313ccd259d429b'
+            'feb1aed0f4034aea8fcb6c645908d175c1e617369867bbac4d04e481991ec00d'
+            '4e138252d9e58b1a6407d005dda6ec66fe40d73686ab62b1d038952bc5003450')
+
+prepare() {
+  cd "$pkgname-$_commit"
+  patch -Np1 -i "$srcdir/pacman-update.patch"
+  export CARGO_HOME="$srcdir/cargo" ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache"
+  export ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+  (cd vendor/libghostty-vt && "$ZIG" build --fetch -Demit-lib-vt -Doptimize=ReleaseFast)
+}
+
+build() {
+  cd "$pkgname-$_commit"
+  export CARGO_HOME="$srcdir/cargo" CARGO_TARGET_DIR="$srcdir/target"
+  export ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  export HERDR_BUILD_CHANNEL=stable
+  export HERDR_BUILD_COMMIT="$_commit"
+  export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
+  cargo build --release --frozen
+  python "$srcdir/licenses.py" "$srcdir/notices"
+}
+
+check() {
+  cd "$pkgname-$_commit"
+  export CARGO_HOME="$srcdir/cargo" CARGO_TARGET_DIR="$srcdir/target"
+  export ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  export HERDR_BUILD_CHANNEL=stable HERDR_BUILD_COMMIT="$_commit" HERDR_DISABLE_SOUND=1
+  export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
+  cargo nextest run --frozen --workspace --no-fail-fast --test-threads 4 \
+    --status-level fail --final-status-level fail
+  python -m unittest scripts.test_vendor_libghostty_vt scripts.test_vendor_portable_pty \
+    scripts.test_ui_hot_path_architecture scripts.test_config_reference_check \
+    scripts.test_agent_detection_manifest_check
+  [[ $("$srcdir/target/release/herdr" --version) == "herdr $_upstreamver" ]]
+  "$srcdir/target/release/herdr" --default-config | grep '^# focus_pane_on_hover = false$' > /dev/null
+}
+
+package() {
+  cd "$pkgname-$_commit"
+  install -Dm755 "$srcdir/target/release/herdr" "$pkgdir/usr/bin/herdr"
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  cp -a "$srcdir/notices/." "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/simdutf-LICENSE-MIT" "$pkgdir/usr/share/licenses/$pkgname/simdutf/LICENSE-MIT"
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 "$startdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+
+  install -d "${pkgdir}/usr/share/bash-completion/completions"
+  install -d "${pkgdir}/usr/share/fish/vendor_completions.d"
+  install -d "${pkgdir}/usr/share/zsh/site-functions"
+  "$srcdir/target/release/herdr" completion bash > "${pkgdir}/usr/share/bash-completion/completions/${pkgname}"
+  "$srcdir/target/release/herdr" completion fish > "${pkgdir}/usr/share/fish/vendor_completions.d/${pkgname}.fish"
+  "$srcdir/target/release/herdr" completion zsh > "${pkgdir}/usr/share/zsh/site-functions/_${pkgname}"
+}

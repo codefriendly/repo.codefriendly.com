@@ -278,6 +278,9 @@ python3 scripts/tests/strata-licenses.py
 `packages/arch/manifest.toml` separates publication targets from recipe storage:
 
 - `binary_repo = true`: approved for the signed binary repository.
+- Approval does not imply publication. Omit `published_version` and `published_at`
+  until the first release passes public verification. Unpublished packages do
+  not appear in the generated binary catalog.
 - `aur_maintainer = true`: owned/maintained by CodeFriendly on AUR.
 - `source_archive = true`: link the matching `<pkgbase>-<published_version>.src.tar.zst`
   under `/arch/sources/`. Upload and verify it before publishing the binary.
@@ -309,6 +312,10 @@ The release command replaces `published_version` and `published_at` in the
 package's manifest table. It requires binary approval. Repeating the command
 for the same version preserves its timestamp. New versions replace the old
 values; no release-history file is kept. Timestamps default to now in UTC.
+If `PACKAGE-REVIEW.local.md` exists, release recording also refreshes its marked
+publication table. Use `python3 scripts/catalog.py --sync-package-review` to
+refresh that table separately. The optional local review holds publication
+decisions and evidence. Generated publication data does not grant review approval.
 Use `--published-at 2026-10-30T20:33:00Z` to supply a verified timestamp.
 The home page shows five distinct packages sorted by their latest publication
 timestamp, with package names in descending order to break exact timestamp ties.
