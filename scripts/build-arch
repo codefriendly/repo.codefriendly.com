@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 CodeFriendly
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+
+usage() {
+  echo "Usage: scripts/build arch <pkgbase> [--refresh-image] [--output <directory>]" >&2
+  exit 2
+}
+[[ $# -ge 1 ]] || usage
+pkgbase=$1
+shift
+[[ $pkgbase =~ ^[A-Za-z0-9@_+][A-Za-z0-9@._+-]*$ ]] || {
+  echo "Invalid pkgbase: $pkgbase" >&2
+  exit 2
+}
+refresh=false
+output=
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --refresh-image) refresh=true; shift ;;
+    --output) [[ $# -ge 2 && -n $2 ]] || usage; output=$2; shift 2 ;;
+    *) usage ;;
+  esac
+done
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+recipe="$repo_root/packages/arch/$pkgbase"
+[[ -f $recipe/PKGBUILD ]] || { echo "No Arch recipe: $recipe" >&2; exit 2; }
+command -v docker >/dev/null || { echo 'Docker is required.' >&2; exit 1; }
+docker info >/dev/null
+if [[ -z $output ]]; then
+  output=$(mktemp -d "${TMPDIR:-/tmp}/codefriendly-arch-$pkgbase.XXXXXX")
+else
+  mkdir -p "$output"
+  [[ -z $(ls -A "$output") ]] || { echo 'Output directory must be empty.' >&2; exit 2; }
+fi
+output=$(cd "$output" && pwd -P)
+echo "Build output: $output"
+image=codefriendly-build-arch:local
+build_options=()
+if $refresh; then
+  build_options+=(--pull --no-cache)
+fi
+docker build "${build_options[@]}" --tag "$image" "$repo_root/docker/arch" 2>&1 | tee "$output/image.log"
+
+container=
+cleanup() {
+  if [[ -n $container ]]; then
+    docker rm --force "$container" >/dev/null
+  fi
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+container=$(docker create --network bridge --shm-size=512m \
+  --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g,mode=1777 "$image")
+# Copy the complete recipe, including local patches, helper scripts, and dotfiles.
+# Do not mount the checkout, output directory, credentials, or Docker socket.
+docker cp "$recipe/." "$container:/build/"
+set +e
+docker start --attach "$container" 2>&1 | tee "$output/build.log"
+status=${PIPESTATUS[0]}
+set -e
+# Keep generated metadata and makepkg logs even when the build fails.
+docker cp "$container:/output/." "$output/"
+echo "Build output: $output"
+exit "$status"

@@ -1,0 +1,16 @@
+/* CodeFriendly brand colors and typography; layout uses Tailwind defaults. */
+@theme {
+  --color-*: initial;
+  --color-brand-ink: #182a3f;
+  --color-brand-ink-raised: #22364a;
+  --color-brand-canvas: #fbf7ef;
+  --color-brand-coral: #c84f3c;
+  --color-brand-coral-dark: #b94735;
+  --color-brand-coral-light: #f1917f;
+  --color-brand-teal: #137a78;
+  --color-brand-teal-light: #61c5be;
+  --color-brand-line: #c9c9c1;
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}

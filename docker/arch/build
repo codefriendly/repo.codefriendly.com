@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 CodeFriendly
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+
+# Upgrade the whole disposable environment before installing recipe dependencies.
+pacman -Syu --noconfirm
+chown -R builder:builder /build /output
+exec sudo -u builder env PKGDEST=/output LOGDEST=/output bash -c '
+  set -euo pipefail
+  makepkg --printsrcinfo > /output/.SRCINFO
+  if [[ -f .SRCINFO ]] && ! cmp -s .SRCINFO /output/.SRCINFO; then
+    echo "Stale .SRCINFO: regenerate it with makepkg --printsrcinfo." >&2
+    exit 1
+  fi
+  makepkg --cleanbuild --clean --syncdeps --noconfirm --log
+  # A recipe can override makepkg.conf. Do not export debug packages.
+  shopt -s nullglob
+  for package in /output/*.pkg.tar.*; do
+    name=$(LC_ALL=C pacman -Qp "$package" | cut -d " " -f 1)
+    if [[ $name == *-debug ]]; then
+      rm -- "$package"
+      continue
+    fi
+    bsdtar -xOf "$package" .PKGINFO > "$package.PKGINFO"
+    bsdtar -tf "$package" > "$package.files"
+    namcap "$package" > "$package.namcap.log" 2>&1
+    (cd /output && sha256sum "${package##*/}") > "$package.sha256"
+  done
+'

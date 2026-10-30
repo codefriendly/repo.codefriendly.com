@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 CodeFriendly
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: $0 <format> <pkgbase> [builder-options]" >&2
+  exit 2
+fi
+format=$1
+shift
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+case $format in
+  arch) exec "$repo_root/scripts/build-arch" "$@" ;;
+  *) echo "Unsupported package format: $format (supported: arch)" >&2; exit 2 ;;
+esac

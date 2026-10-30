@@ -1,0 +1,86 @@
+@import "tailwindcss" source(none);
+@import "./theme.css";
+@source "./index.html";
+
+@layer base {
+  :root { @apply scheme-light; }
+  html {
+    @apply scroll-smooth motion-reduce:scroll-auto;
+    scrollbar-color: var(--color-brand-teal) var(--color-brand-canvas);
+  }
+  body { @apply bg-brand-canvas font-sans text-base leading-7 text-brand-ink; }
+  ::selection { @apply bg-brand-ink text-brand-canvas; }
+  a { @apply text-brand-teal underline decoration-1 underline-offset-4 hover:decoration-2; }
+  :focus-visible { @apply outline-2 outline-solid outline-brand-teal outline-offset-4; }
+  h1 { @apply text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl lg:text-7xl; }
+  h2 { @apply text-3xl leading-tight font-bold tracking-tight md:text-4xl; }
+  h3, h4 { @apply text-lg leading-normal font-bold; }
+  pre, code { @apply font-mono text-sm leading-relaxed; }
+  code { @apply whitespace-nowrap; }
+}
+
+@layer components {
+  .wrap { @apply mx-auto w-11/12 max-w-6xl; }
+  .skip-link { @apply absolute -top-24 left-6 z-10 bg-brand-canvas px-4 py-3 focus:top-4; }
+  .masthead { @apply flex flex-wrap items-center justify-between gap-4 py-6 md:py-8; }
+  .wordmark { @apply text-lg font-bold tracking-tight text-brand-ink no-underline md:text-xl; }
+  .masthead nav { @apply flex items-center gap-4 text-xs font-semibold sm:gap-8 sm:text-sm; }
+  .masthead nav a { @apply no-underline hover:underline; }
+  .intro { @apply max-w-4xl py-12 md:py-16; }
+  .intro h1::after { @apply mt-6 block h-1 w-16 bg-brand-coral; content: ""; }
+  .intro p { @apply mt-6 max-w-xl text-base leading-relaxed md:text-lg; }
+  #arch { @apply scroll-mt-6 border-t border-brand-line pt-8 md:pt-10; }
+  .section-heading { @apply flex flex-wrap items-baseline gap-4; }
+  .architecture { @apply font-mono text-sm; }
+  .section-intro { @apply mt-4 max-w-prose; }
+  .layout { @apply mt-8 flex flex-col gap-8 md:mt-10 md:grid md:grid-cols-3 lg:gap-16; }
+  .guide { @apply min-w-0 md:col-span-2; }
+  aside { @apply -order-1 min-w-0 md:order-none; }
+  .guide > h3 { @apply mb-6 text-xl; }
+  .steps { @apply list-decimal pl-6; }
+  .steps > li { @apply mb-10; }
+  .steps > li::marker { @apply font-semibold text-brand-teal tabular-nums; }
+  .steps p { @apply mt-3 max-w-prose; }
+
+  .command { @apply mt-4 overflow-hidden rounded-xl bg-brand-ink p-4 text-brand-canvas md:p-6; }
+  .command-row { @apply flex items-start gap-3; }
+  .command-row + .command-row { @apply mt-2; }
+  .command pre {
+    @apply min-w-0 flex-1 overflow-x-auto pb-3;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-teal-light) var(--color-brand-ink);
+  }
+  .command code { @apply whitespace-pre; }
+  .command::selection, .command *::selection { @apply bg-brand-teal-light text-brand-ink; }
+  .copy { @apply flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-brand-teal-light hover:bg-brand-ink-raised focus-visible:outline-brand-teal-light; }
+  .copy svg { @apply size-4; }
+
+  .note { @apply text-sm; }
+  .fingerprint {
+    @apply block overflow-x-auto py-2 font-mono text-xs font-semibold whitespace-nowrap;
+    scrollbar-color: var(--color-brand-teal) var(--color-brand-canvas);
+  }
+  .key-check { @apply mt-4; }
+  .key-check summary { @apply cursor-pointer text-sm text-brand-teal underline underline-offset-4; }
+  .key-check .fingerprint { @apply font-normal; }
+  .reference { @apply border-t border-brand-line py-6; }
+  .reference:first-child { @apply border-t-0 pt-0; }
+  .reference h3 { @apply mb-4; }
+  .reference p { @apply text-sm; }
+  .package { @apply border-t border-brand-line py-4; }
+  .package:first-of-type { @apply border-t-0 pt-0; }
+  .package-heading { @apply flex items-baseline justify-between gap-3; }
+  .package a { @apply font-mono text-sm font-semibold; }
+  .version { @apply font-mono text-xs whitespace-nowrap; }
+  .package p { @apply mt-2; }
+  .package small { @apply mt-2 block text-xs; }
+  .package small a, .package-links a { font: inherit; }
+  .package-links { @apply mt-3; }
+  .reference .command { @apply p-4; }
+  .text-link { @apply mt-4 inline-block text-sm font-semibold; }
+  .key-name { @apply font-semibold; }
+  .key-meta { @apply mt-2; }
+  .reference .fingerprint { @apply mt-2; }
+  footer { @apply mt-6 flex flex-col gap-2 border-t border-brand-line py-8 text-xs md:flex-row md:justify-between md:gap-6; }
+  footer p { @apply max-w-prose; }
+}

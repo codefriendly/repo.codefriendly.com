@@ -1,0 +1,140 @@
+# Based on AUR strata-fm-git by tassiovirginio <tassiovirginio@gmail.com>.
+# AUR commit: 14f20b90de99f7680c8dfe258e824d236d0d89e4.
+pkgname=strata-fm
+pkgver=1.1.1
+pkgrel=2
+pkgdesc='A fast, keyboard-first file manager for Linux (without RAR support)'
+arch=('x86_64' 'aarch64')
+url='https://stratafiles.io/'
+license=('GPL-3.0-or-later' 'MIT' 'Apache-2.0' 'BSD-2-Clause' 'BSD-3-Clause' 'CC0-1.0'
+         'CDLA-Permissive-2.0' 'ISC' 'Unicode-3.0' 'Zlib' 'bzip2-1.0.6'
+         'OFL-1.1')
+provides=("strata=$pkgver")
+conflicts=('strata' 'strata-bin' 'strata-fm-git' 'strata-rc-bin')
+# GCC LTO objects in native crates cannot be linked by Rust's LLVM linker.
+# This does not disable the Rust release profile's own LTO.
+options=('!debug' '!lto')
+depends=(
+  'bubblewrap' 'cairo' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'glibc' 'graphene'
+  'gst-plugins-base' 'gst-plugins-base-libs' 'gstreamer' 'gtk4' 'gtksourceview5'
+  'gvfs' 'libgcc' 'libstdc++' 'pango' 'poppler-glib'
+)
+makedepends=('rust' 'pkgconf' 'glib2-devel' 'cargo-about' 'python')
+checkdepends=('desktop-file-utils' 'xorg-server-xvfb' 'xorg-xauth' 'dbus'
+              'cantarell-fonts' 'ffmpeg' 'imagemagick' 'gst-libav' 'gst-plugins-good')
+optdepends=(
+  'ffmpeg: video previews'
+  'ffmpegthumbnailer: video thumbnails'
+  'gst-libav: additional media format playback'
+  'gst-plugins-good: media playback in previews'
+  'gvfs-smb: SMB network locations'
+  'imagemagick: RAW image previews'
+  'libraw: RAW image previews when ImageMagick is unavailable'
+  'squashfs-tools: AppImage icon thumbnails'
+  'xdg-desktop-portal: use Strata for Open/Save file chooser dialogs'
+  'udiskie: unlock encrypted volumes with Strata'
+  'xdg-terminal-exec: preferred Open in Terminal launcher (AUR)'
+  'xdg-utils: set Strata as the default file manager'
+)
+source=(
+  "strata-$pkgver.tar.gz::https://github.com/lgse/strata/archive/refs/tags/v$pkgver.tar.gz"
+  'about.toml'
+  'rust-licenses.py'
+  'license-files.sha256'
+  'README.md'
+  'GPL-3.0.txt::https://www.gnu.org/licenses/gpl-3.0.txt'
+  'rquickjs-LICENSE::https://raw.githubusercontent.com/DelSkayn/rquickjs/f3039c8d931417049ce6133b3ff4550ca38438a5/LICENSE'
+  'siphasher-COPYING::https://raw.githubusercontent.com/jedisct1/rust-siphash/451f67d73a772cba325728109bbfa247750ed076/COPYING'
+)
+sha256sums=(
+  '1a65e931a53cc83182d7b7138b8fd5f5697387f31e5f104f6671e245107a9665'
+  'd870099655a74f4f7b1c7f5a05ad2c87a8157e0a8318bcc30fdd8d50bde167fe'
+  'd0fa9af3f42427a28eb3abc132d33866fa6ef30a40b28e9a6706f6f80406f0c8'
+  '16be353621235df9aaa78eb38c8aaafaa8956a25c38d8b779dcf3891154be3c6'
+  'f97e782d12619c22be85602e726557e0a6d2a58f3a8ef579f2b395a31bc2940b'
+  '3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986'
+  '976ad3d07927343ab99b31510625acba89eac8e0e517c712925620ddeda91b70'
+  'c962ee4d1d05ddc138b202b2540219ebc57893fcf97b364852094a9a94ce1365'
+)
+
+prepare() {
+  cd "strata-$pkgver"
+  # Changed notice text requires review, not an automatic checksum refresh.
+  sha256sum LICENSE THIRD_PARTY_LICENSES.md data/licenses/* > license-inputs.sha256
+  if ! cmp -s "$srcdir/license-files.sha256" license-inputs.sha256; then
+    error 'Bundled license files changed. Review license-files.sha256 before updating it.'
+    return 1
+  fi
+  export CARGO_HOME="$srcdir/cargo-home"
+  # cargo-about resolves full metadata before filtering to the native target.
+  cargo fetch --locked
+  cargo about generate --locked --no-default-features --fail --format json \
+    --target "$(rustc -vV | sed -n 's/^host: //p')" \
+    --config "$srcdir/about.toml" --output-file rust-licenses.json
+  python "$srcdir/rust-licenses.py" rust-licenses.json "$srcdir" RUST-LICENSES.md
+  # Build from the same dependency sources delivered beside the binary.
+  mkdir -p .cargo
+  cargo vendor --frozen --versioned-dirs > .cargo/config.toml
+}
+
+build() {
+  cd "strata-$pkgver"
+  export CARGO_HOME="$srcdir/cargo-home"
+  CARGO_BUILD_JOBS=2 cargo build --release --frozen --no-default-features
+}
+
+check() {
+  cd "strata-$pkgver"
+  export CARGO_HOME="$srcdir/cargo-home"
+  desktop-file-validate data/io.github.lgse.Strata.desktop
+  target/release/strata --version | grep -Fx "strata $pkgver"
+  # Trash tests need HOME and temporary files on the same filesystem.
+  local test_home
+  test_home=$(mktemp -d)
+  xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
+    dbus-run-session -- env -u WAYLAND_DISPLAY -u XDG_CONFIG_HOME \
+    -u XDG_DATA_HOME -u XDG_CACHE_HOME -u XDG_STATE_HOME -u XDG_RUNTIME_DIR \
+    HOME="$test_home" GDK_BACKEND=x11 GTK_A11Y=none \
+    NO_AT_BRIDGE=1 GIO_USE_VFS=local GSK_RENDERER=cairo STRATA_REQUIRE_GTK_TESTS=1 \
+    CARGO_BUILD_JOBS=2 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 \
+    cargo test --frozen --no-default-features --bin strata
+  rm -rf "$test_home"
+}
+
+package() {
+  cd "strata-$pkgver"
+  install -Dm755 target/release/strata "$pkgdir/usr/bin/strata"
+  install -Dm644 data/io.github.lgse.Strata.desktop \
+    "$pkgdir/usr/share/applications/io.github.lgse.Strata.desktop"
+  install -Dm644 data/icons/scalable/apps/io.github.lgse.Strata.svg \
+    "$pkgdir/usr/share/icons/hicolor/scalable/apps/io.github.lgse.Strata.svg"
+  # Upstream lets each user opt into default-file-manager integration.
+  install -Dm644 data/io.github.lgse.Strata.FileManager1.service \
+    "$pkgdir/usr/share/strata/io.github.lgse.Strata.FileManager1.service"
+  install -Dm644 LICENSE THIRD_PARTY_LICENSES.md RUST-LICENSES.md \
+    -t "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/GPL-3.0.txt" "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+  # Retain the paths referenced by THIRD_PARTY_LICENSES.md.
+  install -Dm644 data/licenses/* -t "$pkgdir/usr/share/licenses/$pkgname/data/licenses/"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 "$srcdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+  install -Dm644 docs/portal-file-chooser.md \
+    "$pkgdir/usr/share/doc/$pkgname/portal-file-chooser.md"
+  install -Dm644 data/portal/* -t "$pkgdir/usr/share/doc/$pkgname/portal/"
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/strata/install-source.toml" <<'MARKER'
+manager = "pacman"
+package = "strata-fm"
+channel = "stable"
+update_command = "sudo pacman -Syu strata-fm"
+MARKER
+  # Keep corresponding source separate from the installed binary package.
+  local archive="$pkgname-$pkgver-$pkgrel.src.tar.zst"
+  tar --zstd -cf "${PKGDEST:-$startdir}/$archive" \
+    --exclude="strata-$pkgver/target" \
+    -C "$srcdir" "strata-$pkgver" \
+    -C "$startdir" PKGBUILD .SRCINFO README.md about.toml rust-licenses.py \
+    license-files.sha256 "strata-$pkgver.tar.gz" GPL-3.0.txt \
+    rquickjs-LICENSE siphasher-COPYING
+  (cd "${PKGDEST:-$startdir}" && sha256sum "$archive") \
+    > "${PKGDEST:-$startdir}/$archive.sha256"
+}

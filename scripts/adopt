@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 CodeFriendly
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+
+usage() {
+  echo "Usage: $0 [--dry-run] [--aur-maintainer | --no-aur-maintainer] <pkgbase>" >&2
+  exit 2
+}
+
+dry_run=false
+aur_maintainer=
+while [[ ${1:-} == --* ]]; do
+  case $1 in
+    --dry-run) dry_run=true ;;
+    --aur-maintainer | --no-aur-maintainer)
+      [[ -z $aur_maintainer ]] || usage
+      if [[ $1 == --aur-maintainer ]]; then
+        aur_maintainer=true
+      else
+        aur_maintainer=false
+      fi
+      ;;
+    *) usage ;;
+  esac
+  shift
+done
+
+[[ $# -eq 1 ]] || usage
+pkgbase=$1
+[[ $pkgbase =~ ^[A-Za-z0-9@_+][A-Za-z0-9@._+-]*$ ]] || {
+  echo "Invalid pkgbase: $pkgbase" >&2
+  exit 2
+}
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+package_prefix="packages/arch/$pkgbase"
+
+if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+  echo "The monorepo needs an initial commit before adopting packages." >&2
+  exit 1
+fi
+
+if ! status=$(git status --porcelain --untracked-files=all); then
+  echo "Could not determine worktree status." >&2
+  exit 1
+fi
+if [[ -n $status ]]; then
+  echo "Refusing to adopt into a dirty worktree." >&2
+  exit 1
+fi
+
+if [[ -e $repo_root/$package_prefix ]] || git cat-file -e "HEAD:$package_prefix" 2>/dev/null; then
+  echo "Package directory '$package_prefix' already exists." >&2
+  exit 1
+fi
+
+if [[ -z $aur_maintainer ]]; then
+  read -r -p "Do you maintain '$pkgbase' in AUR? [y/n] " answer || {
+    echo "Specify --aur-maintainer or --no-aur-maintainer when input is unavailable." >&2
+    exit 2
+  }
+  case $answer in
+    y | Y | yes | Yes) aur_maintainer=true ;;
+    n | N | no | No) aur_maintainer=false ;;
+    *) echo "Answer yes or no. No package was imported." >&2; exit 2 ;;
+  esac
+fi
+
+read_url="https://aur.archlinux.org/${pkgbase}.git"
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+clone_options=(--quiet --single-branch --branch master)
+if ! $aur_maintainer; then
+  clone_options+=(--depth 1)
+fi
+git clone "${clone_options[@]}" "$read_url" "$tmpdir/package"
+
+[[ -f $tmpdir/package/PKGBUILD ]] || {
+  echo "AUR repository '$pkgbase' has no PKGBUILD." >&2
+  exit 1
+}
+[[ -f $tmpdir/package/.SRCINFO ]] || {
+  echo "AUR repository '$pkgbase' has no .SRCINFO." >&2
+  exit 1
+}
+
+remote_pkgbase=$(sed -n 's/^[[:space:]]*pkgbase[[:space:]]*=[[:space:]]*//p' "$tmpdir/package/.SRCINFO" | head -n 1)
+[[ $remote_pkgbase == "$pkgbase" ]] || {
+  echo "Requested pkgbase '$pkgbase' does not match AUR metadata '$remote_pkgbase'." >&2
+  exit 1
+}
+
+aur_tip=$(git -C "$tmpdir/package" rev-parse HEAD)
+if $dry_run; then
+  echo "Would adopt '$pkgbase' from $read_url"
+  if $aur_maintainer; then
+    echo "Would preserve AUR history in a subtree commit."
+  else
+    echo "Would copy current tracked files without importing history or creating a commit."
+  fi
+  echo "AUR tip: $aur_tip"
+  exit 0
+fi
+
+mkdir -p packages/arch
+if ! $aur_maintainer; then
+  mkdir "$package_prefix"
+  git -C "$tmpdir/package" archive HEAD | tar -x -C "$package_prefix"
+  echo "Copied '$pkgbase' from AUR commit $aur_tip without importing history."
+  echo "Review the files before staging or committing them."
+  exit 0
+fi
+
+git subtree add --prefix="$package_prefix" "$tmpdir/package" master
+split_tip=$(git subtree split --prefix="$package_prefix")
+
+if ! git merge-base --is-ancestor "$aur_tip" "$split_tip"; then
+  echo "Adopted subtree does not preserve the current AUR history." >&2
+  echo "Inspect the new subtree commit before doing anything else." >&2
+  exit 1
+fi
+
+echo "Adopted '$pkgbase' with AUR history through $aur_tip"
+echo "This imports Git history only; it does not grant AUR maintainership."

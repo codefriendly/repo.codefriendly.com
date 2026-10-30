@@ -1,0 +1,42 @@
+--- a/src/qrcode/scanner/QrScanThread.cpp
++++ b/src/qrcode/scanner/QrScanThread.cpp
+@@ -15,7 +15,7 @@
+
+ void QrScanThread::processQImage(const QImage &qimg)
+ {
+-    const auto hints = ZXing::DecodeHints()
++    const auto hints = ZXing::ReaderOptions()
+             .setFormats(ZXing::BarcodeFormat::QRCode)
+             .setTryHarder(true)
+             .setMaxNumberOfSymbols(1);
+--- a/src/qrcode/utils/QrCodeUtils.cpp
++++ b/src/qrcode/utils/QrCodeUtils.cpp
+@@ -3,7 +3,7 @@
+
+ #include "QrCodeUtils.h"
+
+-Result QrCodeUtils::ReadBarcode(const QImage& img, const ZXing::DecodeHints& hints)
++Result QrCodeUtils::ReadBarcode(const QImage& img, const ZXing::ReaderOptions& hints)
+ {
+     auto ImgFmtFromQImg = [](const QImage& img){
+         switch (img.format()) {
+@@ -50,7 +50,7 @@
+
+
+ QString QrCodeUtils::scanImage(const QImage &img) {
+-    const auto hints = ZXing::DecodeHints()
++    const auto hints = ZXing::ReaderOptions()
+             .setFormats(ZXing::BarcodeFormat::QRCode | ZXing::BarcodeFormat::DataMatrix)
+             .setTryHarder(true)
+             .setBinarizer(ZXing::Binarizer::FixedThreshold);
+--- a/src/qrcode/utils/QrCodeUtils.h
++++ b/src/qrcode/utils/QrCodeUtils.h
+@@ -27,7 +27,7 @@
+ class QrCodeUtils {
+ public:
+     static QString scanImage(const QImage &img);
+-    static Result ReadBarcode(const QImage& img, const ZXing::DecodeHints& hints = { });
++    static Result ReadBarcode(const QImage& img, const ZXing::ReaderOptions& hints = { });
+ };
+
+ #endif //FEATHER_QRCODEUTILS_H

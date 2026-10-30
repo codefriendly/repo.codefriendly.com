@@ -1,0 +1,14 @@
+.pi-subagents/
+/AGENTS.local.md
+old_ver.json
+new_ver.json
+/.amp/portals/
+
+# Website build dependencies
+/site/node_modules/
+
+# makepkg outputs in Arch package directories
+/packages/arch/*/src/
+/packages/arch/*/pkg/
+/packages/arch/*/*.tar.*
+/packages/arch/*/*.log

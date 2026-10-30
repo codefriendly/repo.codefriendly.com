@@ -1,0 +1,30 @@
+pkgbase = noson-app
+	pkgdesc = SONOS controller for Linux platforms
+	pkgver = 5.7.6
+	pkgrel = 1
+	url = https://github.com/janbar/noson-app
+	arch = x86_64
+	arch = aarch64
+	arch = armv7h
+	license = GPL-3.0-only
+	makedepends = cmake
+	makedepends = git
+	makedepends = libpulse
+	makedepends = vulkan-headers
+	makedepends = vulkan-icd-loader
+	depends = qt6-5compat
+	depends = qt6-base
+	depends = qt6-declarative
+	depends = qt6-svg
+	depends = flac
+	depends = glibc
+	depends = hicolor-icon-theme
+	depends = libgcc
+	depends = libstdc++
+	depends = openssl
+	depends = sh
+	depends = zlib
+	source = git+https://github.com/janbar/noson-app.git#tag=5.7.6
+	sha256sums = 31f0ebd28ca1ac89a561ba9c37275e618e49ecd2ad27165c7ef0a56451938df2
+
+pkgname = noson-app

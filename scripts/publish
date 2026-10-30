@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 CodeFriendly
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+
+usage() {
+  echo "Usage: $0 [--dry-run] <pkgbase>" >&2
+  exit 2
+}
+
+dry_run=false
+if [[ ${1:-} == "--dry-run" ]]; then
+  dry_run=true
+  shift
+fi
+
+[[ $# -eq 1 ]] || usage
+package=$1
+[[ $package =~ ^[A-Za-z0-9@_+][A-Za-z0-9@._+-]*$ ]] || {
+  echo "Invalid package directory: $package" >&2
+  exit 2
+}
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+package_prefix="packages/arch/$package"
+pkgdir="$repo_root/$package_prefix"
+[[ -f "$pkgdir/PKGBUILD" ]] || {
+  echo "Missing $package/PKGBUILD" >&2
+  exit 1
+}
+[[ -f "$pkgdir/.SRCINFO" ]] || {
+  echo "Missing $package/.SRCINFO" >&2
+  exit 1
+}
+
+if ! status=$(git status --porcelain --untracked-files=all); then
+  echo "Could not determine worktree status." >&2
+  exit 1
+fi
+if [[ -n $status ]]; then
+  echo "Refusing to publish from a dirty worktree." >&2
+  exit 1
+fi
+
+if ! git cat-file -e "HEAD:$package_prefix/PKGBUILD" 2>/dev/null; then
+  echo "Package '$package' is not present in committed history." >&2
+  echo "Import its existing history with scripts/adopt before publishing." >&2
+  exit 1
+fi
+
+pkgbase=$(sed -n 's/^[[:space:]]*pkgbase[[:space:]]*=[[:space:]]*//p' "$pkgdir/.SRCINFO" | head -n 1)
+[[ -n $pkgbase ]] || {
+  echo "Could not determine pkgbase from $package/.SRCINFO" >&2
+  exit 1
+}
+[[ $pkgbase == "$package" ]] || {
+  echo "Package directory '$package' does not match pkgbase '$pkgbase'." >&2
+  exit 1
+}
+
+if ! command -v makepkg >/dev/null 2>&1; then
+  echo "makepkg is required to validate $package/.SRCINFO." >&2
+  exit 1
+fi
+
+generated=$(mktemp)
+trap 'rm -f "$generated"' EXIT
+(cd "$pkgdir" && makepkg --printsrcinfo) >"$generated"
+if ! cmp -s "$pkgdir/.SRCINFO" "$generated"; then
+  echo "$package/.SRCINFO is stale; regenerate and commit it first:" >&2
+  echo "  (cd $package_prefix && makepkg --printsrcinfo > .SRCINFO)" >&2
+  diff -u "$pkgdir/.SRCINFO" "$generated" || true
+  exit 1
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Python 3.11+ is required to check publication targets." >&2
+  exit 1
+fi
+python3 "$repo_root/scripts/catalog.py" --allow-aur "$pkgbase"
+
+read_url="https://aur.archlinux.org/${pkgbase}.git"
+write_url="ssh://aur@aur.archlinux.org/${pkgbase}.git"
+aur_ref="refs/remotes/aur-publish/${pkgbase}"
+
+git fetch --quiet "$read_url" "+master:${aur_ref}"
+export_commit=$(git subtree split --prefix="$package_prefix")
+
+if ! git merge-base --is-ancestor "$aur_ref" "$export_commit"; then
+  echo "Refusing non-fast-forward update of AUR package '$pkgbase'." >&2
+  echo "Pull/import its current AUR history before publishing." >&2
+  exit 1
+fi
+
+push_args=()
+$dry_run && push_args+=(--dry-run)
+git push "${push_args[@]}" "$write_url" "$export_commit:refs/heads/master"

@@ -1,0 +1,33 @@
+# Publication targets are opt-in. Unlisted recipes are not approved for either target.
+# published_version records a released package, not the latest local recipe version.
+
+[cliamp]
+binary_repo = true
+aur_maintainer = false
+published_version = "2.3.0-2"
+architecture = "x86_64"
+debug_package = false
+description = "A terminal music player inspired by Winamp."
+
+[monstar]
+binary_repo = true
+aur_maintainer = false
+published_version = "1.0.1-2"
+architecture = "x86_64"
+debug_package = false
+description = "A Wayland terminal built from source on the Ghostty terminal core."
+
+[strata-fm]
+binary_repo = true
+aur_maintainer = false
+published_version = "1.1.1-2"
+architecture = "x86_64"
+debug_package = false
+source_archive = true
+description = "A keyboard-first file manager built without RAR extraction or CBR previews."
+
+[sononym]
+binary_repo = false
+aur_maintainer = true
+description = "Audio sample manager and categorizer."
+reason = "Vendor license prohibits redistribution without written permission; download from the vendor and build locally through AUR."

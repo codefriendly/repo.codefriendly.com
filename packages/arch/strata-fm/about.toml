@@ -1,0 +1,70 @@
+# Reviewed license choices for Strata's native Rust dependency graph.
+# A new license outside this list requires review before the build can pass.
+accepted = [
+  "MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "ISC",
+  "BSD-2-Clause", "BSD-3-Clause", "bzip2-1.0.6", "CC0-1.0",
+  "CDLA-Permissive-2.0", "MIT-0", "Unicode-3.0", "Unlicense", "Zlib",
+]
+ignore-dev-dependencies = true
+workarounds = ["chrono"]
+
+# Fetch omitted notices from the exact Git commit recorded in each crate.
+# A changed notice fails its checksum and requires review.
+[docx-rs.clarify]
+license = "MIT"
+[[docx-rs.clarify.git]]
+path = "LICENSE"
+checksum = "718ca36cb18f8ee3ddf9fdffc5f12fc17fad6328d40d8f13bee0a6daa7e1416e"
+
+[fitparser.clarify]
+license = "MIT"
+[[fitparser.clarify.git]]
+path = "LICENSE"
+checksum = "4fe32dd9e3e19be64be6c0ec5d1f0008db17f7ada994e6e74f5c9d5fdef59d5f"
+
+[granit-parser.clarify]
+license = "MIT OR Apache-2.0"
+[[granit-parser.clarify.git]]
+path = "LICENSE"
+license = "MIT"
+checksum = "1af262e6647807eecaec988ecf2b783fb8fdbdecba396d582c1aab90615f6845"
+[[granit-parser.clarify.git]]
+path = ".licenses/ChenYuheng-MIT"
+license = "MIT"
+checksum = "70480dc70c2fe1d9bbb64dab9a0abce266332905ffef9cabeae26dd027716ecb"
+[[granit-parser.clarify.git]]
+path = ".licenses/Ethiraric-MIT"
+license = "MIT"
+checksum = "90f4ea53f408858ba4886f57b8e3ceac876eefbb59c20f0844f0abbfa59e2749"
+
+[rust-i18n-macro.clarify]
+license = "MIT"
+[[rust-i18n-macro.clarify.git]]
+path = "LICENSE"
+checksum = "d6fde6c28ecbccfc7f6d97c0badbb14bbea2cc8f5e81a8c1537204bdfed9a6d5"
+
+[rust-i18n-support.clarify]
+license = "MIT"
+[[rust-i18n-support.clarify.git]]
+path = "LICENSE"
+checksum = "d6fde6c28ecbccfc7f6d97c0badbb14bbea2cc8f5e81a8c1537204bdfed9a6d5"
+
+[unrar_sys.clarify]
+license = "MIT"
+[[unrar_sys.clarify.git]]
+path = "LICENSE-MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[constant_time_eq.clarify]
+license = "CC0-1.0 OR MIT-0 OR Apache-2.0"
+[[constant_time_eq.clarify.files]]
+path = "LICENSE-APACHE"
+license = "Apache-2.0"
+checksum = "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+
+[ryu.clarify]
+license = "Apache-2.0 OR BSL-1.0"
+[[ryu.clarify.files]]
+path = "LICENSE-APACHE"
+license = "Apache-2.0"
+checksum = "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"

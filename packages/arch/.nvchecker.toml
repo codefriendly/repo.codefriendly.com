@@ -1,0 +1,108 @@
+[__config__]
+oldver = "old_ver.json"
+newver = "new_ver.json"
+
+[cliamp]
+source = "github"
+github = "bjarneo/cliamp"
+use_latest_release = true
+prefix = "v"
+
+[connectiq-sdk-manager]
+# The package follows the SDK version advertised beside the SDK Manager download.
+source = "regex"
+url = "https://developer.garmin.com/connect-iq/sdk/"
+regex = 'Get the Connect IQ\s*(?:<!--.*?-->\s*)?([0-9]+(?:\.[0-9]+)+)(?:<!--.*?-->)?\s*SDK'
+
+[diskwatch]
+source = "cratesio"
+cratesio = "diskwatch"
+
+[feather-wallet]
+source = "github"
+github = "feather-wallet/feather"
+use_latest_release = true
+
+[fortune-mod-off]
+source = "git"
+git = "https://github.com/shlomif/fortune-mod"
+include_regex = 'fortune-mod-\d+\.\d+\.\d+'
+prefix = "fortune-mod-"
+
+[libsoup]
+# Keep the libsoup 2.x ABI; do not select libsoup 3 releases.
+source = "git"
+git = "https://gitlab.gnome.org/GNOME/libsoup.git"
+include_regex = '2\.\d*[02468]\.\d+'
+
+[mkp224o]
+source = "github"
+github = "cathugger/mkp224o"
+use_latest_release = true
+prefix = "v"
+
+[monstar]
+source = "github"
+github = "rockorager/monstar"
+use_latest_release = true
+prefix = "v"
+
+[noson-app]
+source = "github"
+github = "janbar/noson-app"
+use_latest_release = true
+prefix = "v"
+
+[omarchy-flux]
+source = "github"
+github = "bjarneo/flux"
+use_latest_release = true
+prefix = "v"
+
+[pangolin-bin]
+source = "github"
+github = "fosrl/cli"
+use_latest_release = true
+
+[qmd]
+source = "npm"
+npm = "@tobilu/qmd"
+
+[qtilitools]
+source = "git"
+git = "https://github.com/qtilities/qtilitools"
+include_regex = '\d+\.\d+\.\d+'
+
+[rar]
+source = "regex"
+url = "https://www.rarlab.com/download.htm"
+regex = 'RAR for Linux x64 ([0-9]+\.[0-9]+)</b>'
+
+[remanager-bin]
+source = "github"
+github = "rmitchellscott/reManager"
+use_latest_release = true
+prefix = "v"
+
+[sddm-conf]
+source = "git"
+git = "https://github.com/qtilities/sddm-conf"
+include_regex = '\d+\.\d+\.\d+'
+
+[sononym]
+source = "regex"
+url = "https://www.sononym.net/download/"
+regex = '''sononym-([0-9.]+)\.tar\.bz2'''
+
+[strata-fm]
+source = "github"
+github = "lgse/strata"
+use_latest_release = true
+prefix = "v"
+
+[webkit2gtk]
+# Preserve the existing soup2-compatible 2.50 maintenance-series check.
+source = "git"
+git = "https://github.com/WebKit/WebKit"
+include_regex = 'webkitgtk-2\.50\.\d+'
+prefix = "webkitgtk-"

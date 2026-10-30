@@ -1,0 +1,54 @@
+# Maintainer: Fijxu <fijxu [at] nadeko [dot] net>
+
+# Based on https://aur.archlinux.org/packages/monero-feather-git/
+
+pkgname='feather-wallet'
+pkgver=2.8.1
+_pkgname=feather-${pkgver}
+pkgrel=2
+pkgdesc='A free Monero desktop wallet'
+license=('BSD-3-Clause')
+arch=('x86_64')
+url="https://featherwallet.org"
+depends=('boost-libs' 'expat' 'hidapi' 'libgcrypt' 'libsodium' 'libunwind' 'libusb' 'libzip'
+         'openssl' 'protobuf' 'qrencode' 'qt6-base' 'qt6-multimedia' 'qt6-svg' 'qt6-websockets' 'unbound' 'zbar'
+         'rapidjson' 'zxing-cpp')
+makedepends=('git' 'cmake' 'boost')
+optdepends=('tor: To use .onion Monero nodes')
+conflicts=('monero-feather' 'monero-feather-git' 'featherwallet-bin' 'featherwallet-appimage')
+
+validpgpkeys=('8185E158A33330C7FD61BC0D1F76E155CEFBA71C') # FeatherWallet <dev@featherwallet.org>
+
+source=(https://featherwallet.org/files/releases/source/feather-${pkgver}.tar.gz{,.asc}
+        epee-cmath.patch
+        zxing-reader-options.patch
+        trezor-boost-includes.patch)
+
+sha256sums=('1db8cbc5123abc8de63c96e6aedc08a8cda669b032b75c18f955e71ce8c4291e'
+            'SKIP'
+            '07a66440c7decb2f923a6f35a79227352a692f465c895d2f96b3d9bcca60da1b'
+            '1506ce6fda96e526d2811c4a35116310834668c46b21e815bcfb31868f909180'
+            'e1123d5de2b3d9c3ec3a18a5dc9d9b0942a487efc3a68bf3f3be4649f401dc12')
+
+prepare() {
+	cd "${_pkgname}"
+	patch -p1 < "${srcdir}/epee-cmath.patch"
+	patch -p1 < "${srcdir}/zxing-reader-options.patch"
+	patch -p1 < "${srcdir}/trezor-boost-includes.patch"
+}
+
+build() {
+	cd "${srcdir}/${_pkgname}"
+	rm -rf build
+	mkdir -p build
+	cd build
+	cmake .. -DMANUAL_SUBMODULES=1
+	cmake --build .
+}
+
+package() {
+	install -Dm644 "${srcdir}/${_pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+	install -Dm755 "${srcdir}/${_pkgname}/build/bin/feather" "${pkgdir}/usr/bin/feather"
+	install -Dm644 "${srcdir}/${_pkgname}/src/assets/feather.desktop" "${pkgdir}/usr/share/applications/feather.desktop"
+	install -Dm644 "${srcdir}/${_pkgname}/src/assets/images/appicons/256x256.png" "${pkgdir}/usr/share/pixmaps/feather.png"
+}

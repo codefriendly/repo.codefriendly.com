@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CodeFriendly packages. Set up the signed Arch Linux repository, verify the signing key, and find package sources.">
+  <meta name="theme-color" content="#182A3F">
+  <title>Packages · CodeFriendly</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600&amp;family=Manrope:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <link href="./assets/site.css?v=3" rel="stylesheet">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="masthead wrap">
+    <a class="wordmark" href="/" aria-label="CodeFriendly repository home">CodeFriendly</a>
+    <nav aria-label="Main navigation">
+      <a href="#arch">Arch Linux</a>
+      <a href="https://github.com/codefriendly/repo.codefriendly.com">Package sources</a>
+    </nav>
+  </header>
+  <main id="main" class="wrap">
+    <div class="intro">
+      <h1>CodeFriendly packages.</h1>
+      <p>Signed packages, with the sources and setup instructions in one place.</p>
+    </div>
+    <section id="arch" aria-labelledby="arch-title">
+      <div class="section-heading">
+        <h2 id="arch-title">Arch Linux</h2>
+        <span class="architecture">x86_64</span>
+      </div>
+      <p class="section-intro">Install signed binaries with pacman, or build our AUR packages locally. Each listing shows which method to use.</p>
+      <div class="layout">
+        <div class="guide">
+          <h3>Install from the binary repository</h3>
+          <ol class="steps">
+            <li>
+              <h4>Download and check the signing key</h4>
+              <p>Download the public key and display its fingerprint.</p>
+              <div class="command" data-copy-label="key verification command" data-copy-mode="lines"><pre><code>curl -fSLo codefriendly-repo.asc https://repo.codefriendly.com/arch/codefriendly-repo.asc
+gpg --show-keys --with-fingerprint codefriendly-repo.asc</code></pre></div>
+              <p class="note">Check that the full fingerprint matches this value before continuing:</p>
+              <code class="fingerprint" tabindex="0" aria-label="Expected signing-key fingerprint">AFA2 FD35 394F 39A7 61B7 83E5 7695 B10F 4DFB 18FE</code>
+            </li>
+            <li>
+              <h4>Trust the repository key</h4>
+              <p>Only do this if you trust CodeFriendly to provide software for your system.</p>
+              <div class="command" data-copy-label="key trust command" data-copy-mode="lines"><pre><code>sudo pacman-key --add codefriendly-repo.asc
+sudo pacman-key --lsign-key AFA2FD35394F39A761B783E57695B10F4DFB18FE</code></pre></div>
+            </li>
+            <li>
+              <h4>Add the repository</h4>
+              <p>Add this block to <code>/etc/pacman.conf</code>, below your existing repositories.</p>
+              <div class="command" data-copy-label="pacman repository configuration"><pre><code>[codefriendly]
+SigLevel = Required DatabaseRequired
+Server = https://repo.codefriendly.com/arch/$arch</code></pre></div>
+              <p class="note">Pacman checks both package and repository database signatures.</p>
+            </li>
+            <li>
+              <h4>Update and install</h4>
+              <p>Refresh the repositories, upgrade your system, and install cliamp.</p>
+              <div class="command" data-copy-label="cliamp installation command"><pre><code>sudo pacman -Syu cliamp</code></pre></div>
+              <p class="note">Debug packages are not hosted. You can build them locally from the packaging source if needed.</p>
+            </li>
+          </ol>
+        </div>
+        <aside aria-label="Arch repository reference">
+          <section class="reference" aria-labelledby="packages-title">
+            <h3 id="packages-title">Binary repository</h3>
+            <p>Ready to install with pacman.</p>
+<!-- binary-catalog:start -->
+            <div class="package">
+              <div class="package-heading">
+                <a href="https://repo.codefriendly.com/arch/x86_64/cliamp-2.3.0-2-x86_64.pkg.tar.zst">cliamp</a>
+                <span class="version">2.3.0-2</span>
+              </div>
+              <p>A terminal music player inspired by Winamp.</p>
+              <small><a href="https://repo.codefriendly.com/arch/x86_64/cliamp-2.3.0-2-x86_64.pkg.tar.zst.sig">Signature</a></small>
+            </div>
+            <p class="package-links"><a href="https://github.com/codefriendly/repo.codefriendly.com/tree/main/packages/arch/cliamp">Packaging source</a> · <a href="https://github.com/bjarneo/cliamp">Upstream project</a></p>
+            <div class="package">
+              <div class="package-heading">
+                <a href="https://repo.codefriendly.com/arch/x86_64/monstar-1.0.1-2-x86_64.pkg.tar.zst">monstar</a>
+                <span class="version">1.0.1-2</span>
+              </div>
+              <p>A Wayland terminal built from source on the Ghostty terminal core.</p>
+              <small><a href="https://repo.codefriendly.com/arch/x86_64/monstar-1.0.1-2-x86_64.pkg.tar.zst.sig">Signature</a></small>
+            </div>
+            <p class="package-links"><a href="https://github.com/codefriendly/repo.codefriendly.com/tree/main/packages/arch/monstar">Packaging source</a> · <a href="https://github.com/rockorager/monstar">Upstream project</a></p>
+            <div class="package">
+              <div class="package-heading">
+                <a href="https://repo.codefriendly.com/arch/x86_64/strata-fm-1.1.1-2-x86_64.pkg.tar.zst">strata-fm</a>
+                <span class="version">1.1.1-2</span>
+              </div>
+              <p>A keyboard-first file manager built without RAR extraction or CBR previews.</p>
+              <small><a href="https://repo.codefriendly.com/arch/x86_64/strata-fm-1.1.1-2-x86_64.pkg.tar.zst.sig">Signature</a> · <a href="https://repo.codefriendly.com/arch/sources/strata-fm-1.1.1-2.src.tar.zst">Source archive</a></small>
+            </div>
+            <p class="package-links"><a href="https://github.com/codefriendly/repo.codefriendly.com/tree/main/packages/arch/strata-fm">Packaging source</a> · <a href="https://stratafiles.io/">Upstream project</a></p>
+<!-- binary-catalog:end -->
+          </section>
+          <section class="reference" aria-labelledby="aur-title">
+            <h3 id="aur-title">AUR packages</h3>
+            <p>Build locally, not from this binary repository.</p>
+<!-- aur-catalog:start -->
+            <div class="package">
+              <div class="package-heading"><a href="https://aur.archlinux.org/packages/sononym">sononym</a></div>
+              <p>Audio sample manager and categorizer.</p>
+              <p class="note">Maintained by CodeFriendly on AUR. Build locally; no binary hosted here.</p>
+              <small><a href="https://github.com/codefriendly/repo.codefriendly.com/tree/main/packages/arch/sononym">Packaging source</a> · <a href="https://www.sononym.net">Upstream project</a></small>
+              <div class="command" data-copy-label="sononym AUR installation command"><pre><code>paru -S sononym</code></pre></div>
+              <p class="note">Requires the paru AUR helper. Review the recipe before building, or <a href="https://wiki.archlinux.org/title/Arch_User_Repository#Installing_and_upgrading_packages">build manually</a>.</p>
+              <p class="note">Vendor license prohibits redistribution without written permission; download from the vendor and build locally through AUR.</p>
+            </div>
+<!-- aur-catalog:end -->
+          </section>
+          <section class="reference" aria-labelledby="signing-title">
+            <h3 id="signing-title">Signing key</h3>
+            <p class="key-name">CodeFriendly Repository</p>
+            <p><a href="mailto:repo@c11.dev">repo@c11.dev</a></p>
+            <p class="key-meta">Ed25519 · expires 28 October 2031</p>
+            <details class="key-check">
+              <summary>Show full fingerprint</summary>
+              <code class="fingerprint" tabindex="0">AFA2FD35394F39A761B783E57695B10F4DFB18FE</code>
+            </details>
+            <a class="text-link" href="https://repo.codefriendly.com/arch/codefriendly-repo.asc" download>Download public key</a>
+          </section>
+          <section class="reference" aria-labelledby="about-title">
+            <h3 id="about-title">Before you install</h3>
+            <p>This is an independent, third-party repository. It is not an official Arch Linux repository.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap">
+    <p>Maintained by CodeFriendly.</p>
+    <a href="https://github.com/codefriendly/repo.codefriendly.com/issues">Report a package issue</a>
+  </footer>
+  <span id="copy-status" class="sr-only" role="status" aria-live="polite"></span>
+  <script>
+    if (window.isSecureContext && navigator.clipboard) {
+      function copyIcon(state) {
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+        const shapes = state === 'copied'
+          ? [['path', { d: 'm5 12 4 4L19 6' }]]
+          : state === 'error'
+            ? [['circle', { cx: '12', cy: '12', r: '9' }], ['path', { d: 'M12 8v4m0 4h.01' }]]
+            : [['rect', { x: '8', y: '8', width: '12', height: '12', rx: '2' }], ['path', { d: 'M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3' }]];
+        shapes.forEach(([tag, attributes]) => {
+          const shape = document.createElementNS(ns, tag);
+          Object.entries(attributes).forEach(([name, value]) => shape.setAttribute(name, value));
+          svg.append(shape);
+        });
+        return svg;
+      }
+      document.querySelectorAll('.command').forEach((block) => {
+        const text = block.querySelector('code').textContent;
+        const commands = block.dataset.copyMode === 'lines' ? text.split('\n').filter(Boolean) : [text];
+        const rows = document.createDocumentFragment();
+        commands.forEach((command, index) => {
+          const row = document.createElement('div');
+          row.className = 'command-row';
+          const pre = document.createElement('pre');
+          const code = document.createElement('code');
+          code.textContent = command;
+          pre.append(code);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy';
+          const label = block.dataset.copyLabel + (commands.length > 1 ? ' ' + (index + 1) : '');
+          button.setAttribute('aria-label', 'Copy ' + label);
+          function setState(state, title) {
+            button.dataset.state = state;
+            button.title = title;
+            button.replaceChildren(copyIcon(state));
+          }
+          setState('ready', 'Copy ' + label);
+          row.append(pre, button);
+          rows.append(row);
+          let resetTimer;
+          button.addEventListener('click', async () => {
+            clearTimeout(resetTimer);
+            try {
+              await navigator.clipboard.writeText(command);
+              setState('copied', 'Copied');
+              document.getElementById('copy-status').textContent = 'Copied ' + label + '.';
+            } catch {
+              setState('error', 'Copy failed. Select the command text to copy manually.');
+              document.getElementById('copy-status').textContent = 'Clipboard unavailable. Select the command text and copy it manually.';
+            }
+            resetTimer = setTimeout(() => { setState('ready', 'Copy ' + label); }, 3000);
+          });
+        });
+        block.replaceChildren(rows);
+      });
+    }
+  </script>
+</body>
+</html>

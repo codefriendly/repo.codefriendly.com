@@ -1,0 +1,133 @@
+# Maintainer: Tim Culverhouse <tim@timculverhouse.com>
+# Based on AUR monstar commit 9b4505632201491a73a5b819ee013a2d7616e9a1.
+pkgname=monstar
+pkgver=1.0.1
+pkgrel=2
+_zigver=0.16.0
+_z2dcommit=47fc1030c1636dcfb75ea1cc238f706dd1feb379
+_uucodecommit=2826a37a4562284fdacd8fa029d49509cc9bffcd
+pkgdesc='Linux-native Wayland terminal built on Ghostty terminal core'
+arch=('x86_64')
+url='https://github.com/rockorager/monstar'
+license=('MIT' 'MPL-2.0' 'Unicode-3.0' 'BSD-3-Clause' 'Apache-2.0' 'Apache-2.0 WITH LLVM-exception' 'LicenseRef-W3C-Software-and-Document' 'LicenseRef-Xorg-RGB')
+conflicts=('monstar-bin' 'monstar-git')
+options=('!debug')
+depends=(
+  'dbus'
+  'fontconfig'
+  'freetype2'
+  'glibc'
+  'harfbuzz'
+  'libxkbcommon'
+  'wayland'
+)
+makedepends=(
+  'ncurses'
+  'wayland-protocols>=1.49'
+)
+checkdepends=('noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji')
+optdepends=(
+  'noto-fonts-emoji: emoji support'
+  'noto-fonts-cjk: CJK font support'
+  'systemd: launch additional terminal windows'
+  'xdg-desktop-portal: open links and files through a desktop portal'
+  'xdg-utils: open links when a desktop portal is unavailable'
+)
+source=(
+  "$pkgname-$pkgver.tar.gz::$url/releases/download/v$pkgver/$pkgname-$pkgver-source.tar.gz"
+  "iterm2-Color-Schemes-LICENSE::https://raw.githubusercontent.com/mbadolato/iTerm2-Color-Schemes/8c97c3c684da58a19149d1080f3d18ff5e161c01/LICENSE"
+  "https://ziglang.org/download/$_zigver/zig-x86_64-linux-$_zigver.tar.xz"
+  "z2d-LICENSE::https://raw.githubusercontent.com/vancluever/z2d/$_z2dcommit/LICENSE"
+  "z2d-COPYING::https://raw.githubusercontent.com/vancluever/z2d/$_z2dcommit/COPYING"
+  "uucode-LICENSE_unicode::https://raw.githubusercontent.com/jacobsandlund/uucode/$_uucodecommit/licenses/LICENSE_unicode"
+  "uucode-LICENSE_Bjoern_Hoehrmann::https://raw.githubusercontent.com/jacobsandlund/uucode/$_uucodecommit/licenses/LICENSE_Bjoern_Hoehrmann"
+  'https://www.x.org/releases/individual/app/rgb-1.1.0.tar.xz'
+  'highway-LICENSE-BSD3::https://raw.githubusercontent.com/google/highway/66486a10623fa0d72fe91260f96c892e41aceb06/LICENSE-BSD3'
+  'simdutf-LICENSE-MIT::https://raw.githubusercontent.com/simdutf/simdutf/ca7acbcea967b5dcbab490066e99e3a6e6925539/LICENSE-MIT'
+  'simdutf-LICENSE-APACHE::https://raw.githubusercontent.com/simdutf/simdutf/ca7acbcea967b5dcbab490066e99e3a6e6925539/LICENSE-APACHE'
+  'LICENSES.md'
+)
+sha256sums=(
+  'a82209aaef3534407f29d860e3174974f19b4a7c10286212fdeacdcd1cb9049d'
+  '2373168614b527494dff99eb393024608216db79f687d58bad420f6c1e0ad192'
+  '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
+  'c3c0b845181a67c2f926485299855769afa675bc90b18904c3087ae884cb1873'
+  'd8d2562a7cb68ffdfe91fc66af1ed4a8a4e272aa4ab59bea7451ba34b9aba3d4'
+  '1eda5a3b026870c737b22e8bcd4954338612c790db688242e003f41a4fa95175'
+  'de219cece932aad5a817bf763393d8d149d378a15d2ad5320e3331eac07626dd'
+  'fc03d7f56e5b2a617668167f8927948cce54f93097e7ccd9f056077f479ed37b'
+  'd25e82e26acd42ca3ccc9993622631163425b869b9e16284226d534cff6470f2'
+  'fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f'
+  '3d34610fc6b5e1b0bfe4e2f36171c2d62c28ef05cb8d704f5a0073be41a43b3d'
+  '50329b24c316b4d25489c9b2891440cfe51829613d5a29518889f0e1df12aff8'
+)
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  # Ghostty requires Zig 0.16.0; Arch's current Zig is not compatible.
+  ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" \
+    "$srcdir/zig-x86_64-linux-$_zigver/zig" build --fetch
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  rm -rf "$srcdir/monstar-build"
+
+  ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" DESTDIR="$srcdir/monstar-build" \
+    "$srcdir/zig-x86_64-linux-$_zigver/zig" build \
+    --prefix /usr \
+    --build-id=sha1 \
+    -Doptimize=ReleaseFast \
+    -Dcpu=baseline
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" \
+    "$srcdir/zig-x86_64-linux-$_zigver/zig" build test --summary all
+}
+
+package() {
+  cp -a "$srcdir/monstar-build/." "$pkgdir/"
+  install -Dm644 "$srcdir/$pkgname-$pkgver/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$srcdir/iterm2-Color-Schemes-LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/iterm2-Color-Schemes-LICENSE"
+  install -Dm644 "$srcdir/$pkgname-$pkgver/src/assets/SymbolsNerdFontMono-LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/SymbolsNerdFontMono-LICENSE"
+  # The vendored stb headers contain their MIT notices, not separate license files.
+  local header
+  for header in stb_image.h stb_image_resize.h; do
+    sed -n '/^ALTERNATIVE A - MIT License/,/^ALTERNATIVE B/{ /^ALTERNATIVE B/d; p; }' \
+      "$srcdir/$pkgname-$pkgver/vendor/$header" > "$srcdir/$header-LICENSE"
+    install -Dm644 "$srcdir/$header-LICENSE" \
+      "$pkgdir/usr/share/licenses/$pkgname/$header-LICENSE"
+  done
+  # Zig keeps these content-hashed dependency sources in the project zig-pkg directory.
+  local deps="$srcdir/$pkgname-$pkgver/zig-pkg"
+  install -Dm644 "$deps"/ghostty-*/LICENSE "$pkgdir/usr/share/licenses/$pkgname/Ghostty-LICENSE"
+  install -Dm644 "$deps"/wayland-*/LICENSE "$pkgdir/usr/share/licenses/$pkgname/zig-wayland-LICENSE"
+  install -Dm644 "$deps"/uucode-*/LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/uucode-LICENSE.md"
+  install -Dm644 "$srcdir/rgb-1.1.0/COPYING" "$pkgdir/usr/share/licenses/$pkgname/Xorg-RGB-COPYING"
+  install -Dm644 "$srcdir"/z2d-LICENSE "$srcdir"/z2d-COPYING \
+    "$srcdir"/uucode-LICENSE_unicode "$srcdir"/uucode-LICENSE_Bjoern_Hoehrmann \
+    "$srcdir"/highway-LICENSE-BSD3 "$srcdir"/simdutf-LICENSE-MIT "$srcdir"/simdutf-LICENSE-APACHE \
+    "$srcdir/LICENSES.md" -t "$pkgdir/usr/share/licenses/$pkgname/"
+  # Keep all in-header third-party notices in Ghostty's amalgamated simdutf header.
+  install -Dm644 "$deps"/ghostty-*/pkg/simdutf/vendor/simdutf.h \
+    "$pkgdir/usr/share/licenses/$pkgname/simdutf-third-party-notices.h"
+  # Preserve notices for Zig standard-library code and bundled runtime headers.
+  install -Dm644 "$srcdir/zig-x86_64-linux-$_zigver/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/Zig-LICENSE"
+  local runtime
+  for runtime in libcxx libcxxabi libunwind; do
+    install -Dm644 "$srcdir/zig-x86_64-linux-$_zigver/lib/$runtime/LICENSE.TXT" \
+      "$pkgdir/usr/share/licenses/$pkgname/$runtime-LICENSE.TXT"
+  done
+  # Include the exact MPL-covered source, with its original in-file notices.
+  install -dm755 "$pkgdir/usr/share/doc/$pkgname"
+  cp -a "$deps/z2d-0.12.2-pre-j5P_HtA8EQDpzu5RUtQhr_Sn9MeQF3_q7rWMw3ouesd0" \
+    "$pkgdir/usr/share/doc/$pkgname/z2d-source"
+  install -Dm644 "$srcdir/z2d-LICENSE" "$pkgdir/usr/share/doc/$pkgname/z2d-source/LICENSE"
+  install -Dm644 "$srcdir/z2d-COPYING" "$pkgdir/usr/share/doc/$pkgname/z2d-source/COPYING"
+}

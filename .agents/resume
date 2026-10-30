@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Grant socket access to the orb user's existing group, without a new login.
+if ! docker info >/dev/null 2>&1; then
+  amp orb service start docker-daemon --command "sudo dockerd --group $(id -gn)"
+  for ((attempt = 0; attempt < 40; attempt++)); do
+    if docker info >/dev/null 2>&1; then
+      exit 0
+    fi
+    sleep 0.2
+  done
+  echo 'Docker did not become ready; check amp orb service logs docker-daemon.' >&2
+  exit 1
+fi

@@ -1,0 +1,26 @@
+pkgbase = pangolin-bin
+	pkgdesc = Pangolin Client - Secure reverse proxy and tunnel (Binary version)
+	pkgver = 0.18.1
+	pkgrel = 1
+	url = https://github.com/fosrl/cli
+	install = pangolin-bin.install
+	arch = x86_64
+	arch = aarch64
+	arch = armv7h
+	arch = armv6h
+	arch = riscv64
+	license = AGPL-3.0-or-later
+	provides = pangolin
+	conflicts = pangolin
+	source_x86_64 = pangolin-0.18.1::https://github.com/fosrl/cli/releases/download/0.18.1/pangolin-cli_linux_amd64
+	sha256sums_x86_64 = 07ae60ba0da7f3d25da6b78b76f0f2f40069605c2c52340f2f364e3cef72053f
+	source_aarch64 = pangolin-0.18.1::https://github.com/fosrl/cli/releases/download/0.18.1/pangolin-cli_linux_arm64
+	sha256sums_aarch64 = 27a0ce04bb23bff83ed51638902034577ae71f460fe9a01ae0d0de035eb10118
+	source_armv7h = pangolin-0.18.1::https://github.com/fosrl/cli/releases/download/0.18.1/pangolin-cli_linux_arm32
+	sha256sums_armv7h = 05b4fffbed974e39d83192069b3621f513bae7697994b28f410a980fafc2d98f
+	source_armv6h = pangolin-0.18.1::https://github.com/fosrl/cli/releases/download/0.18.1/pangolin-cli_linux_arm32v6
+	sha256sums_armv6h = ff6a39f8e271d5bc6b65f92f76a1ff468eb1e6696fdd29d1ba68c93a1003d84c
+	source_riscv64 = pangolin-0.18.1::https://github.com/fosrl/cli/releases/download/0.18.1/pangolin-cli_linux_riscv64
+	sha256sums_riscv64 = c363fa69da00c228b575a7bab8f175a946ada972813eab285fddb3b0edf4bc8a
+
+pkgname = pangolin-bin
