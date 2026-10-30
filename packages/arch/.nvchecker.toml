@@ -29,6 +29,11 @@ git = "https://github.com/shlomif/fortune-mod"
 include_regex = 'fortune-mod-\d+\.\d+\.\d+'
 prefix = "fortune-mod-"
 
+[herdr-core]
+source = "regex"
+url = "https://releases.herdr.dev/core/latest.json"
+regex = '"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"'
+
 [libsoup]
 # Keep the libsoup 2.x ABI; do not select libsoup 3 releases.
 source = "git"

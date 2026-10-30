@@ -1,0 +1,93 @@
+pkgname=herdr-core
+pkgver=0.1.15
+pkgrel=1
+_ghosttycommit=1e5cdb865807abc990181efb8ebfa9122955cce2
+_zigver=0.16.0
+pkgdesc='Persistent terminal runtime for coding agents, with the hc command'
+arch=('x86_64')
+url='https://github.com/herdrdev/herdr-core'
+license=('Apache-2.0' 'MIT' 'BSD-3-Clause' 'Unicode-3.0' 'Apache-2.0 WITH LLVM-exception')
+depends=('glibc' 'libgcc')
+makedepends=('rust' 'rust-src' 'jq')
+checkdepends=('python' 'openssh')
+optdepends=('openssh: connect to remote machines'
+            'curl: download core releases for remote machines')
+conflicts=('herdr-core-bin')
+options=('!debug' '!lto')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+        "ghostty-$_ghosttycommit.tar.gz::https://github.com/ghostty-org/ghostty/archive/$_ghosttycommit.tar.gz"
+        "https://ziglang.org/download/$_zigver/zig-x86_64-linux-$_zigver.tar.xz"
+        'README.md')
+sha256sums=('a819116f5aaca75edff405e801c656cbd9a08a496c6289a1969eeeaf1233053e'
+            '3157b5a1ddc11040763a772a154b709ed7939a9626c3d1cd9207ebbab3fd2811'
+            '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
+            '40935020f263ba23c040eed02893c37b19365515100ec12e1ef8dcb491945640')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  rmdir vendor/ghostty
+  mv "$srcdir/ghostty-$_ghosttycommit" vendor/ghostty
+  export CARGO_HOME="$srcdir/cargo" ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache"
+  export ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  cargo fetch --locked
+  (cd vendor/ghostty && "$ZIG" build --fetch -Demit-lib-vt -Doptimize=ReleaseFast -Dcpu=baseline)
+  # Regenerate the locked crate notices rather than relying on a stale release copy.
+  sh scripts/notices
+  # simdutf's CPU detection has a separate BSD grant inside its amalgamated header.
+  sed -n '/^Copyright (c) 2016-     Facebook, Inc/,/^\*\//{ /^\*\//d; p; }' \
+    vendor/ghostty/pkg/simdutf/vendor/simdutf.h > distribution/notices/simdutf-TH.txt
+  grep -q 'Redistributions in binary form must reproduce' distribution/notices/simdutf-TH.txt
+  # Retain upstream's notices and supplement them with our actual Rust toolchain.
+  {
+    rustc --version
+    cat /usr/share/licenses/rust/COPYRIGHT-library.html.rustc
+    cat /usr/lib/rustlib/src/rust/library/compiler-builtins/LICENSE.txt
+    cat /usr/lib/rustlib/src/rust/library/compiler-builtins/libm/LICENSE.txt
+  } > distribution/notices/rust-build.txt
+  local notice
+  for notice in simdutf-TH rust-build; do
+    printf '\n==== Arch build: %s\n\n' "$notice" >> crates/herdr-core/THIRD-PARTY-NOTICES
+    cat "distribution/notices/$notice.txt" >> crates/herdr-core/THIRD-PARTY-NOTICES
+  done
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  export CARGO_HOME="$srcdir/cargo" CARGO_TARGET_DIR="$srcdir/target"
+  export ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
+  cargo build --frozen --release --package herdr-core
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  export CARGO_HOME="$srcdir/cargo" CARGO_TARGET_DIR="$srcdir/target"
+  export ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" ZIG="$srcdir/zig-x86_64-linux-$_zigver/zig"
+  export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
+  # Match upstream CI's watchdog and timing settings. Tests create isolated sessions.
+  HC_TEST_WATCHDOG_S=120 HC_TEST_SLOW_RUNNER=1 \
+    cargo test --frozen --workspace --no-fail-fast -- --test-threads 4
+  "$srcdir/target/release/herdr-core" --licenses > "$srcdir/built-notices"
+  cmp crates/herdr-core/THIRD-PARTY-NOTICES "$srcdir/built-notices"
+  grep -q 'Facebook, Inc' "$srcdir/built-notices"
+  [[ $("$srcdir/target/release/herdr-core" --version) == "hc $pkgver" ]]
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 "$srcdir/target/release/herdr-core" "$pkgdir/usr/bin/herdr-core"
+  ln -s herdr-core "$pkgdir/usr/bin/hc"
+  install -Dm644 LICENSE crates/herdr-core/THIRD-PARTY-NOTICES \
+    -t "$pkgdir/usr/share/licenses/$pkgname/"
+  # Preserve complete in-header notices and Zig's bundled runtime notices.
+  install -Dm644 vendor/ghostty/pkg/simdutf/vendor/simdutf.h \
+    "$pkgdir/usr/share/licenses/$pkgname/simdutf-third-party-notices.h"
+  install -Dm644 "$srcdir/zig-x86_64-linux-$_zigver/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/Zig-LICENSE"
+  local runtime
+  for runtime in libcxx libcxxabi libunwind; do
+    install -Dm644 "$srcdir/zig-x86_64-linux-$_zigver/lib/$runtime/LICENSE.TXT" \
+      "$pkgdir/usr/share/licenses/$pkgname/$runtime-LICENSE.TXT"
+  done
+  install -Dm644 "$startdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+}

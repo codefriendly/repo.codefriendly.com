@@ -9,6 +9,14 @@ architecture = "x86_64"
 debug_package = false
 description = "A terminal music player inspired by Winamp."
 
+[herdr-core]
+binary_repo = true
+aur_maintainer = false
+published_version = "0.1.15-1"
+architecture = "x86_64"
+debug_package = false
+description = "A source-built terminal runtime for coding agents, including the hc command."
+
 [monstar]
 binary_repo = true
 aur_maintainer = false

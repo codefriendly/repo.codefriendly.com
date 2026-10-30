@@ -17,6 +17,7 @@ Inclusion does not imply that CodeFriendly is the current AUR maintainer.
 | Package | Install method | Command |
 | --- | --- | --- |
 | [cliamp](packages/arch/cliamp) | Signed binary repository | `sudo pacman -S cliamp` |
+| [herdr-core](packages/arch/herdr-core) | Signed binary repository | `sudo pacman -S herdr-core` |
 | [monstar](packages/arch/monstar) | Signed binary repository | `sudo pacman -S monstar` |
 | [pangolin](packages/arch/pangolin) | Signed binary repository | `sudo pacman -S pangolin` |
 | [sononym](packages/arch/sononym) | [AUR — build locally](https://aur.archlinux.org/packages/sononym) | `paru -S sononym` |
