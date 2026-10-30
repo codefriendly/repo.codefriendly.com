@@ -73,4 +73,11 @@ sed -i 's/  jq -n true/  echo deliberate-build-failure; return 1/' "$recipe/PKGB
 expect_failure "$build" arch build-fixture --output "$tmp/failed"
 grep -q deliberate-build-failure "$tmp/failed/build.log"
 [[ -s $tmp/failed/.SRCINFO ]]
+# Opt-in repository dependencies must install and run inside the container.
+rm "$recipe/.SRCINFO"
+sed -i 's/makedepends=(jq python)/makedepends=(jq python)\ndepends=(herdr-core)/; s/  echo deliberate-build-failure; return 1/  hc --version; jq -n true/' "$recipe/PKGBUILD"
+"$build" arch build-fixture --codefriendly-repo --output "$tmp/repository"
+grep -q '^hc ' "$tmp/repository/build.log"
+package=$(find "$tmp/repository" -name '*.pkg.tar.zst' -print -quit)
+grep -qx 'depend = herdr-core' "$package.PKGINFO"
 echo 'Container build tests passed.'

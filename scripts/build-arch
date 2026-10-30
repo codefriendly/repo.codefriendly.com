@@ -4,7 +4,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: scripts/build arch <pkgbase> [--refresh-image] [--output <directory>]" >&2
+  echo "Usage: scripts/build arch <pkgbase> [--refresh-image] [--codefriendly-repo] [--output <directory>]" >&2
   exit 2
 }
 [[ $# -ge 1 ]] || usage
@@ -15,10 +15,12 @@ shift
   exit 2
 }
 refresh=false
+codefriendly_repo=false
 output=
 while [[ $# -gt 0 ]]; do
   case $1 in
     --refresh-image) refresh=true; shift ;;
+    --codefriendly-repo) codefriendly_repo=true; shift ;;
     --output) [[ $# -ge 2 && -n $2 ]] || usage; output=$2; shift 2 ;;
     *) usage ;;
   esac
@@ -53,6 +55,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 container=$(docker create --network bridge --shm-size=512m \
+  --env "CODEFRIENDLY_REPO=$codefriendly_repo" \
   --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g,mode=1777 "$image")
 # Copy the complete recipe, including local patches, helper scripts, and dotfiles.
 # Do not mount the checkout, output directory, credentials, or Docker socket.

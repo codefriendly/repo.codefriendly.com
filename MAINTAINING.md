@@ -211,10 +211,14 @@ The container has a 2 GiB executable tmpfs at `/tmp` and 512 MiB of shared memor
 The tmpfs supports unnamed temporary files (`O_TMPFILE`) that the writable Docker
 overlay can refuse. These limits do not reserve that amount of memory in advance.
 
-The build installs dependencies from the standard Arch repositories. It does not
-install AUR dependencies, use the host's repository configuration, or bypass missing
-dependencies. Packages that need other repositories or local dependency packages
-need further builder support. Builds use the Docker daemon's native architecture;
+The build installs dependencies from the standard Arch repositories by default.
+Add `--codefriendly-repo` for packages that depend on our published binaries,
+for example `scripts/build arch herdr-desktop --codefriendly-repo`.
+This option downloads the public key, checks its pinned full fingerprint, and
+enables the signed CodeFriendly repository only inside the disposable container.
+Both package and database signatures remain required. It does not install AUR
+dependencies, use the host's repository configuration, or bypass missing
+dependencies. Builds use the Docker daemon's native architecture;
 this is not a cross-compilation workflow.
 
 The command prints the output path. By default it creates a directory under

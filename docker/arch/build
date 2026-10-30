@@ -3,6 +3,18 @@
 # SPDX-License-Identifier: MIT
 set -euo pipefail
 
+if [[ ${CODEFRIENDLY_REPO:-false} == true ]]; then
+  # Trust only the pinned repository key, inside this disposable container.
+  fingerprint=AFA2FD35394F39A761B783E57695B10F4DFB18FE
+  curl -fSLo /tmp/codefriendly-repo.asc https://repo.codefriendly.com/arch/codefriendly-repo.asc
+  actual=$(gpg --batch --show-keys --with-colons /tmp/codefriendly-repo.asc | awk -F: '$1 == "fpr" { print $10; exit }')
+  [[ $actual == "$fingerprint" ]] || { echo 'Repository key fingerprint mismatch.' >&2; exit 1; }
+  pacman-key --init
+  pacman-key --add /tmp/codefriendly-repo.asc
+  pacman-key --lsign-key "$fingerprint"
+  printf '\n[codefriendly]\nSigLevel = Required DatabaseRequired\nServer = https://repo.codefriendly.com/arch/$arch\n' >> /etc/pacman.conf
+fi
+
 # Upgrade the whole disposable environment before installing recipe dependencies.
 pacman -Syu --noconfirm
 chown -R builder:builder /build /output
