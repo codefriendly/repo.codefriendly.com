@@ -34,6 +34,15 @@ debug_package = false
 source_archive = true
 description = "A source-built tunnel client with updates managed by pacman."
 
+[remanager]
+binary_repo = true
+aur_maintainer = false
+published_version = "1.7.4-1"
+architecture = "x86_64"
+debug_package = false
+source_archive = true
+description = "A source-built mod manager for reMarkable tablets."
+
 [strata-fm]
 binary_repo = true
 aur_maintainer = false
