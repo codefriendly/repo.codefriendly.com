@@ -53,12 +53,6 @@ github = "janbar/noson-app"
 use_latest_release = true
 prefix = "v"
 
-[omarchy-flux]
-source = "github"
-github = "bjarneo/flux"
-use_latest_release = true
-prefix = "v"
-
 [pangolin-bin]
 source = "github"
 github = "fosrl/cli"
