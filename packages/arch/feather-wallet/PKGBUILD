@@ -3,9 +3,9 @@
 # Based on https://aur.archlinux.org/packages/monero-feather-git/
 
 pkgname='feather-wallet'
-pkgver=2.8.1
+pkgver=2.9.1
 _pkgname=feather-${pkgver}
-pkgrel=2
+pkgrel=1
 pkgdesc='A free Monero desktop wallet'
 license=('BSD-3-Clause')
 arch=('x86_64')
@@ -21,19 +21,16 @@ validpgpkeys=('8185E158A33330C7FD61BC0D1F76E155CEFBA71C') # FeatherWallet <dev@f
 
 source=(https://featherwallet.org/files/releases/source/feather-${pkgver}.tar.gz{,.asc}
         epee-cmath.patch
-        zxing-reader-options.patch
         trezor-boost-includes.patch)
 
-sha256sums=('1db8cbc5123abc8de63c96e6aedc08a8cda669b032b75c18f955e71ce8c4291e'
+sha256sums=('028e66f990aacaee7f90d1b53e23c1bc1e96f4dced733c6360b840b8e4017053'
             'SKIP'
             '07a66440c7decb2f923a6f35a79227352a692f465c895d2f96b3d9bcca60da1b'
-            '1506ce6fda96e526d2811c4a35116310834668c46b21e815bcfb31868f909180'
             'e1123d5de2b3d9c3ec3a18a5dc9d9b0942a487efc3a68bf3f3be4649f401dc12')
 
 prepare() {
 	cd "${_pkgname}"
 	patch -p1 < "${srcdir}/epee-cmath.patch"
-	patch -p1 < "${srcdir}/zxing-reader-options.patch"
 	patch -p1 < "${srcdir}/trezor-boost-includes.patch"
 }
 
