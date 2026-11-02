@@ -1,0 +1,197 @@
+pkgbase = elephant
+	pkgdesc = Data provider and executor for the Walker launcher
+	pkgver = 2.22.1
+	pkgrel = 1
+	url = https://github.com/abenz1267/elephant
+	arch = x86_64
+	arch = aarch64
+	license = GPL-3.0-only
+	license = MIT
+	license = BSD-2-Clause
+	license = BSD-3-Clause
+	license = Apache-2.0
+	license = ISC
+	license = LicenseRef-MIT-Lucent
+	makedepends = go
+	makedepends = git
+	options = !debug
+	options = !lto
+	source = elephant-2.22.1.tar.gz::https://github.com/abenz1267/elephant/archive/refs/tags/v2.22.1.tar.gz
+	source = README.md
+	sha256sums = 3d1d0d4c55ae531fa3f06406b96504b5165a0d7b53523d1f8351d9d93e457f44
+	sha256sums = SKIP
+
+pkgname = elephant
+	optdepends = walker: launcher frontend
+	optdepends = elephant-all: general-purpose providers
+	conflicts = elephant-bin
+
+pkgname = elephant-archlinuxpkgs
+	pkgdesc = archlinuxpkgs provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-archlinuxpkgs-bin
+
+pkgname = elephant-bluetooth
+	pkgdesc = bluetooth provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = bluez-utils
+	conflicts = elephant-bluetooth-bin
+
+pkgname = elephant-bookmarks
+	pkgdesc = bookmarks provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = jq
+	depends = sqlite
+	conflicts = elephant-bookmarks-bin
+
+pkgname = elephant-calc
+	pkgdesc = calc provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = libqalculate
+	conflicts = elephant-calc-bin
+
+pkgname = elephant-clipboard
+	pkgdesc = clipboard provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = wl-clipboard
+	depends = imagemagick
+	optdepends = tesseract: text recognition in copied images
+	optdepends = localsend: send clipboard items
+	conflicts = elephant-clipboard-bin
+
+pkgname = elephant-desktopapplications
+	pkgdesc = desktopapplications provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-desktopapplications-bin
+
+pkgname = elephant-files
+	pkgdesc = files provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = fd
+	depends = wl-clipboard
+	optdepends = localsend: send files
+	conflicts = elephant-files-bin
+
+pkgname = elephant-menus
+	pkgdesc = menus provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-menus-bin
+
+pkgname = elephant-playerctl
+	pkgdesc = playerctl provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = playerctl
+	conflicts = elephant-playerctl-bin
+
+pkgname = elephant-providerlist
+	pkgdesc = providerlist provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-providerlist-bin
+
+pkgname = elephant-runner
+	pkgdesc = runner provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-runner-bin
+
+pkgname = elephant-snippets
+	pkgdesc = snippets provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = wtype
+	conflicts = elephant-snippets-bin
+
+pkgname = elephant-symbols
+	pkgdesc = symbols provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-symbols-bin
+
+pkgname = elephant-todo
+	pkgdesc = todo provider for Elephant
+	depends = elephant=2.22.1-1
+	optdepends = libnotify: notifications
+	conflicts = elephant-todo-bin
+
+pkgname = elephant-unicode
+	pkgdesc = unicode provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-unicode-bin
+
+pkgname = elephant-websearch
+	pkgdesc = websearch provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-websearch-bin
+
+pkgname = elephant-windows
+	pkgdesc = windows provider for Elephant
+	depends = elephant=2.22.1-1
+	conflicts = elephant-windows-bin
+
+pkgname = elephant-wireplumber
+	pkgdesc = wireplumber provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = wireplumber
+	conflicts = elephant-wireplumber-bin
+
+pkgname = elephant-1password
+	pkgdesc = 1password provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = wl-clipboard
+	optdepends = 1password-cli: the op command (not in the Arch repositories)
+	optdepends = libnotify: notifications
+	conflicts = elephant-1password-bin
+
+pkgname = elephant-bitwarden
+	pkgdesc = bitwarden provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = rbw
+	depends = wl-clipboard
+	optdepends = libnotify: notifications
+	conflicts = elephant-bitwarden-bin
+
+pkgname = elephant-protonpass
+	pkgdesc = protonpass provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = wl-clipboard
+	optdepends = proton-pass-cli: the pass-cli command (not in the Arch repositories)
+	optdepends = libnotify: notifications
+	conflicts = elephant-protonpass-bin
+
+pkgname = elephant-niriactions
+	pkgdesc = niriactions provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = niri
+	conflicts = elephant-niriactions-bin
+
+pkgname = elephant-nirisessions
+	pkgdesc = nirisessions provider for Elephant
+	depends = elephant=2.22.1-1
+	depends = niri
+	conflicts = elephant-nirisessions-bin
+
+pkgname = elephant-all
+	pkgdesc = Elephant with its general-purpose providers
+	arch = any
+	depends = elephant=2.22.1-1
+	depends = elephant-archlinuxpkgs=2.22.1-1
+	depends = elephant-bluetooth=2.22.1-1
+	depends = elephant-bookmarks=2.22.1-1
+	depends = elephant-calc=2.22.1-1
+	depends = elephant-clipboard=2.22.1-1
+	depends = elephant-desktopapplications=2.22.1-1
+	depends = elephant-files=2.22.1-1
+	depends = elephant-menus=2.22.1-1
+	depends = elephant-playerctl=2.22.1-1
+	depends = elephant-providerlist=2.22.1-1
+	depends = elephant-runner=2.22.1-1
+	depends = elephant-snippets=2.22.1-1
+	depends = elephant-symbols=2.22.1-1
+	depends = elephant-todo=2.22.1-1
+	depends = elephant-unicode=2.22.1-1
+	depends = elephant-websearch=2.22.1-1
+	depends = elephant-windows=2.22.1-1
+	depends = elephant-wireplumber=2.22.1-1
+	optdepends = elephant-1password: app- or compositor-specific provider
+	optdepends = elephant-bitwarden: app- or compositor-specific provider
+	optdepends = elephant-protonpass: app- or compositor-specific provider
+	optdepends = elephant-niriactions: app- or compositor-specific provider
+	optdepends = elephant-nirisessions: app- or compositor-specific provider
+	conflicts = elephant-all-bin

@@ -22,6 +22,12 @@ regex = '.+'
 source = "cratesio"
 cratesio = "diskwatch"
 
+[elephant]
+source = "github"
+github = "abenz1267/elephant"
+use_latest_release = true
+prefix = "v"
+
 [feather-wallet]
 source = "github"
 github = "feather-wallet/feather"

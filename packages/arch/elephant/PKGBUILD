@@ -1,0 +1,181 @@
+# Based on the AUR elephant, elephant-all and elephant-<provider> recipes by
+# Andrej Benz <hello[at]benz[dot]dev>; AUR elephant commit
+# fa4ae49703d0f1a2b47d3a93f0a373fb404aff39, elephant-all commit
+# bbd3635ab43c909450747010df3b4e78cb392fba. Provider runtime dependencies follow
+# AUR elephant-bin by Rafael Dominiquini, checked against the upstream source.
+pkgbase=elephant
+# General-purpose providers. elephant-all depends on these.
+_general=(archlinuxpkgs bluetooth bookmarks calc clipboard desktopapplications
+          files menus playerctl providerlist runner snippets symbols todo
+          unicode websearch windows wireplumber)
+# App- and compositor-specific providers. Install them individually.
+_specific=(1password bitwarden protonpass niriactions nirisessions)
+_providers=("${_general[@]}" "${_specific[@]}")
+pkgname=(elephant "${_providers[@]/#/elephant-}" elephant-all)
+pkgver=2.22.1
+pkgrel=1
+pkgdesc='Data provider and executor for the Walker launcher'
+arch=('x86_64' 'aarch64')
+url='https://github.com/abenz1267/elephant'
+license=('GPL-3.0-only' 'MIT' 'BSD-2-Clause' 'BSD-3-Clause' 'Apache-2.0' 'ISC'
+         'LicenseRef-MIT-Lucent')
+makedepends=('go' 'git')
+options=('!debug' '!lto')
+source=("$pkgbase-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+        'README.md')
+sha256sums=('3d1d0d4c55ae531fa3f06406b96504b5165a0d7b53523d1f8351d9d93e457f44'
+            'SKIP')
+
+# Runtime dependencies of each provider, beyond the exact elephant build.
+declare -A _depends=(
+  [1password]='wl-clipboard'
+  [bitwarden]='rbw wl-clipboard'
+  [bluetooth]='bluez-utils'
+  [bookmarks]='jq sqlite'
+  [calc]='libqalculate'
+  [clipboard]='wl-clipboard imagemagick'
+  [files]='fd wl-clipboard'
+  [niriactions]='niri'
+  [nirisessions]='niri'
+  [playerctl]='playerctl'
+  [protonpass]='wl-clipboard'
+  [snippets]='wtype'
+  [wireplumber]='wireplumber'
+)
+declare -A _optdepends=(
+  [1password]="'1password-cli: the op command (not in the Arch repositories)' 'libnotify: notifications'"
+  [bitwarden]="'libnotify: notifications'"
+  [clipboard]="'tesseract: text recognition in copied images' 'localsend: send clipboard items'"
+  [files]="'localsend: send files'"
+  [protonpass]="'proton-pass-cli: the pass-cli command (not in the Arch repositories)' 'libnotify: notifications'"
+  [todo]="'libnotify: notifications'"
+)
+
+# Every provider requires the exact elephant build: Go plugins load only into the
+# binary they were compiled with.
+for _p in "${_providers[@]}"; do
+  eval "package_elephant-$_p() {
+    pkgdesc='$_p provider for Elephant'
+    depends=('elephant=$pkgver-$pkgrel' ${_depends[$_p]})
+    ${_optdepends[$_p]:+optdepends=(${_optdepends[$_p]})}
+    conflicts=('elephant-$_p-bin')
+    _package_provider $_p
+  }"
+done
+eval "package_elephant-all() {
+  pkgdesc='Elephant with its general-purpose providers'
+  arch=('any')
+  depends=('elephant=$pkgver-$pkgrel' $(printf "'elephant-%s=$pkgver-$pkgrel' " "${_general[@]}"))
+  optdepends=($(printf "'elephant-%s: app- or compositor-specific provider' " "${_specific[@]}"))
+  conflicts=('elephant-all-bin')
+}"
+unset _p
+
+_go_env() {
+  export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=1
+  export CGO_CPPFLAGS="$CPPFLAGS" CGO_CFLAGS="$CFLAGS" CGO_CXXFLAGS="$CXXFLAGS" CGO_LDFLAGS="$LDFLAGS"
+}
+
+prepare() {
+  cd "$pkgbase-$pkgver"
+  _go_env
+  go mod download
+  go mod verify
+  # Keep complete published module sources as well as the selected vendor tree.
+  cp -a "$GOPATH/pkg/mod/cache/download" module-source
+  GOBIN="$GOPATH/bin" GOFLAGS= go install github.com/google/go-licenses/v2@v2.0.1
+  export GOFLAGS=-mod=readonly
+  local packages=(./cmd/elephant "${_providers[@]/#/./internal/providers/}")
+  "$GOPATH/bin/go-licenses" report "${packages[@]}" > dependency-licenses.csv
+  echo "Dependency licenses:"; cut -d, -f3 dependency-licenses.csv | sort | uniq -c
+  "$GOPATH/bin/go-licenses" check "${packages[@]}" \
+    --allowed_licenses=GPL-3.0,MIT,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC,LicenseRef-MIT-Lucent
+  go list -deps -f '{{with .Module}}{{.Path}}{{"\t"}}{{.Dir}}{{end}}' "${packages[@]}" \
+    | sort -u > dependency-modules.tsv
+  local module directory file
+  while IFS=$'\t' read -r module directory; do
+    [[ -n $module && $module != github.com/abenz1267/elephant/v2 ]] || continue
+    while IFS= read -r -d '' file; do
+      install -Dm644 "$file" "dependency-licenses/$module/${file#"$directory/"}"
+    done < <(find "$directory" -type f \( -iname 'LICENSE*' -o -iname 'LICENCE*' \
+      -o -iname 'COPYING*' -o -iname 'NOTICE*' -o -iname 'PATENTS*' \
+      -o -iname 'COPYRIGHT*' \) -print0)
+  done < dependency-modules.tsv
+  cp /usr/share/licenses/go/LICENSE dependency-licenses/Go-LICENSE
+  go mod vendor
+  # Go makes its module cache read-only; makepkg --clean must be able to remove it.
+  chmod -R u+w "$GOPATH/pkg/mod" module-source
+}
+
+build() {
+  cd "$pkgbase-$pkgver"
+  _go_env
+  export GOPROXY=off GOSUMDB=off
+  # The binary and every plugin must share one toolchain and one set of flags.
+  local flags=(-mod=vendor -trimpath -buildvcs=false -ldflags=-linkmode=external)
+  mkdir -p build
+  go build "${flags[@]}" -buildmode=pie -o build/elephant ./cmd/elephant
+  local provider
+  for provider in "${_providers[@]}"; do
+    go build "${flags[@]}" -buildmode=plugin -o "build/$provider.so" "./internal/providers/$provider"
+  done
+}
+
+check() {
+  cd "$pkgbase-$pkgver"
+  _go_env
+  export GOPROXY=off GOSUMDB=off
+  go test -mod=vendor ./...
+  # Every plugin must load into this binary. listproviders prints one line per
+  # loaded provider, and one line per configured menu for the menus provider.
+  # Providers hide themselves when their commands are missing, so put no-op stubs
+  # for those commands on PATH; nothing runs them while listing.
+  local test_home expected actual command
+  test_home=$(mktemp -d)
+  mkdir -p "$test_home/elephant/menus" "$test_home/bin"
+  printf 'name = "packaging-check"\nname_pretty = "Packaging check"\n' \
+    > "$test_home/elephant/menus/packaging-check.toml"
+  for command in bluetoothctl fd identify op pass-cli playerctl pw-dump qalc rbw wl-paste wpctl; do
+    printf '#!/bin/sh\nexit 0\n' > "$test_home/bin/$command"
+    chmod 755 "$test_home/bin/$command"
+  done
+  expected=$(printf '%s\n' "${_providers[@]}" | sed 's/^menus$/menus:packaging-check/' | sort)
+  actual=$(env -u SUDO_USER HOME="$test_home" XDG_CONFIG_HOME="$test_home" \
+    PATH="$test_home/bin:$PATH" XDG_CURRENT_DESKTOP=niri \
+    ELEPHANT_PROVIDER_DIR="$PWD/build" ./build/elephant listproviders | sort)
+  if [[ $actual != "$expected" ]]; then
+    diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true
+    return 1
+  fi
+  rm -rf "$test_home"
+}
+
+package_elephant() {
+  optdepends=('walker: launcher frontend'
+              'elephant-all: general-purpose providers')
+  conflicts=('elephant-bin')
+  cd "$pkgbase-$pkgver"
+  install -Dm755 build/elephant "$pkgdir/usr/bin/elephant"
+  install -Dm644 assets/elephant.service "$pkgdir/usr/lib/systemd/user/elephant.service"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cp -a dependency-licenses "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 "$startdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+  # Corresponding source for the binary and every provider plugin.
+  local archive="$pkgbase-$pkgver-$pkgrel.src.tar.zst"
+  tar --zstd -cf "${PKGDEST:-$startdir}/$archive" \
+    --exclude="$pkgbase-$pkgver/build" \
+    -C "$srcdir" "$pkgbase-$pkgver" \
+    -C "$startdir" PKGBUILD .SRCINFO README.md "$pkgbase-$pkgver.tar.gz"
+  (cd "${PKGDEST:-$startdir}" && sha256sum "$archive") \
+    > "${PKGDEST:-$startdir}/$archive.sha256"
+}
+
+# Each plugin statically links Go dependencies, so each package carries the
+# license and dependency notices itself.
+_package_provider() {
+  cd "$srcdir/$pkgbase-$pkgver"
+  install -Dm755 "build/$1.so" "$pkgdir/usr/lib/elephant/$1.so"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  cp -a dependency-licenses "$pkgdir/usr/share/licenses/$pkgname/"
+}
