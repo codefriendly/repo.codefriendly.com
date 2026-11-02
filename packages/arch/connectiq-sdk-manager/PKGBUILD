@@ -5,6 +5,8 @@
 pkgname=connectiq-sdk-manager
 pkgver=9.2.0
 pkgrel=1
+# Last-Modified of the unversioned download; nvchecker tracks this value.
+_manager_last_modified='Wed, 11 Mar 2026 13:31:30 GMT'
 pkgdesc="Garmin Connect IQ SDK Manager"
 arch=('x86_64')
 url="https://developer.garmin.com/connect-iq/sdk/"

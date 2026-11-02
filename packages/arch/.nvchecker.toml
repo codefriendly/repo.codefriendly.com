@@ -9,10 +9,14 @@ use_latest_release = true
 prefix = "v"
 
 [connectiq-sdk-manager]
-# The package follows the SDK version advertised beside the SDK Manager download.
-source = "regex"
-url = "https://developer.garmin.com/connect-iq/sdk/"
-regex = 'Get the Connect IQ\s*(?:<!--.*?-->\s*)?([0-9]+(?:\.[0-9]+)+)(?:<!--.*?-->)?\s*SDK'
+# The download URL is unversioned, and the advertised SDK version changes without
+# a new SDK Manager. Track the download's Last-Modified header instead and compare
+# it with _manager_last_modified in the PKGBUILD, not pkgver. When it changes,
+# update pkgver to the SDK version shown on https://developer.garmin.com/connect-iq/sdk/.
+source = "httpheader"
+url = "https://developer.garmin.com/downloads/connect-iq/sdk-manager/connectiq-sdk-manager-linux.zip"
+header = "Last-Modified"
+regex = '.+'
 
 [diskwatch]
 source = "cratesio"

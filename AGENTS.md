@@ -74,7 +74,8 @@ entries and planning language alone do not authorize publication.
 Run `uvx nvchecker -c packages/arch/.nvchecker.toml` first for routine Arch upstream checks. Its
 configuration records the authoritative upstream endpoint for each package;
 do not rediscover release sources with broad web searches. Compare the
-reported versions with each package's `pkgver` in `PKGBUILD`.
+reported versions with each package's `pkgver` in `PKGBUILD`, unless the
+package's config comment names a different baseline.
 
 If an Arch package is not configured in `packages/arch/.nvchecker.toml`, use a lightweight
 read-only lookup against the official homepage or source URL from its
