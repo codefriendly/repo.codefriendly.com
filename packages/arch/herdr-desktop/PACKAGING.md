@@ -1,7 +1,7 @@
 # Herdr desktop: Arch Linux source build
 
-This package builds herdr-app v0.1.10 from revision
-36725d47c89cd19345994363d6d9cdee5c42c80b. Ghostty VT is pinned to
+This package builds herdr-app v0.1.11 from revision
+e12fd31866f33cb613922d0b33ea506e6f23ce3c. Ghostty VT is pinned to
 291fd050b9e9c293c8adb6a140742649b7e42d3a. Cargo.lock pins the Rust graph.
 Zig 0.16.0 builds the static VT library. The executable uses system glibc.
 
@@ -12,8 +12,8 @@ package. Only x86_64 is tested and supported by this recipe.
 ## Runtime and updates
 
 A Linux desktop session and a working Vulkan driver are required. Install
-herdr-core >=0.1.11 separately through pacman. The published core 0.1.15-1
-meets the app's minimum version. The executable is named `herdr-app`.
+herdr-core >=0.1.11 separately through pacman. Core 0.1.16 meets the app's
+minimum version. The executable is named `herdr-app`.
 
 This build does not set HERDR_APP_RELEASE or run upstream installers.
 Upstream source builds disable normal app and core update checks. Update

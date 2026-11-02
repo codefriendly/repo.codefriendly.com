@@ -1,6 +1,6 @@
 --- a/defaults/frame/settings/main.js
 +++ b/defaults/frame/settings/main.js
-@@ -683,8 +683,9 @@
+@@ -686,8 +686,9 @@
                });
      const primary = (id, label, f) =>
        div().id(id).px(12).py(5).rounded(7).cursor_pointer().bg(t.accent).text_color(t.accent_foreground).text_size(13).font_semibold().hover((s) => s.opacity(0.9)).on_click(f).child(label);
@@ -10,4 +10,4 @@
 +      ? ["Managed by pacman. Update this package with pacman, not here.", null]
        : u.app.ready
          ? [`${u.app.ready} is ready. Restart to switch now; it also switches when you quit.`, primary("st-app-update", "Restart to update", () => run("app.update"))]
-         : [`Up to date.${checked}`, check("st-check-app")];
+         : [result, check("st-check-app")];

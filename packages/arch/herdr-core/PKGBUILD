@@ -1,5 +1,5 @@
 pkgname=herdr-core
-pkgver=0.1.15
+pkgver=0.1.16
 pkgrel=1
 _ghosttycommit=1e5cdb865807abc990181efb8ebfa9122955cce2
 _zigver=0.16.0
@@ -18,7 +18,7 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
         "ghostty-$_ghosttycommit.tar.gz::https://github.com/ghostty-org/ghostty/archive/$_ghosttycommit.tar.gz"
         "https://ziglang.org/download/$_zigver/zig-x86_64-linux-$_zigver.tar.xz"
         'README.md')
-sha256sums=('a819116f5aaca75edff405e801c656cbd9a08a496c6289a1969eeeaf1233053e'
+sha256sums=('63fdb4a556f99f5642d0f52c7dc0bb87e424c2363c5717d920a7e71de84f3f5e'
             '3157b5a1ddc11040763a772a154b709ed7939a9626c3d1cd9207ebbab3fd2811'
             '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
             '40935020f263ba23c040eed02893c37b19365515100ec12e1ef8dcb491945640')

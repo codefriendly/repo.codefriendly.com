@@ -1,8 +1,8 @@
 # Adapted from herdr-app-bin, maintained by Qingxu <me@linioi.com>.
 pkgname=herdr-desktop
-pkgver=0.1.10
+pkgver=0.1.11
 pkgrel=1
-_commit=36725d47c89cd19345994363d6d9cdee5c42c80b
+_commit=e12fd31866f33cb613922d0b33ea506e6f23ce3c
 _ghosttycommit=291fd050b9e9c293c8adb6a140742649b7e42d3a
 _zigver=0.16.0
 pkgdesc='Native desktop workspace for terminals and coding agents that keep running'
@@ -28,13 +28,13 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz"
         'https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate'
         'herdr-app.desktop' 'PACKAGING.md' 'pacman-updates.patch')
 noextract=('option-ext-0.2.0.crate')
-sha256sums=('e03d48d1ae545b40f632104b6d10d4a8980a98777ab35d385330144c130ddcc9'
+sha256sums=('c9bbc6a8ddf1886d364cb1ec74ed3de162dc2bc7ce5af5c98ec1b67895cdc50e'
             'f35b464f1aee22ffda9f6359038b9ad18a784342b4a4fa1cb97a79fb9ade79a4'
             '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
             '04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d'
             '2cc1199525a1bac6364a7397363f96a00db3faaf51aea049f9d4a7f694ef885a'
-            'adfe0bc593fa2d30384b98f3d3a9376fce3685cd98f8e626eeb2f60ba441ac5d'
-            '419c009a5dff916ddab670473ddbd8f914960d1e5bd1e1d63bce055210f5525b')
+            '9979f138c591087942aa92b48930384f0e237ac0656967494144eb8b83df8c5d'
+            'c5cd59a51407ab12925dd94cb66f35f886682a616368c59e71c55fab5b056d01')
 
 prepare() {
   cd "herdr-app-$_commit"
@@ -84,7 +84,7 @@ check() {
   # Match upstream CI's unoptimized dependency profile; do not skip those tests.
   CARGO_PROFILE_TEST_DEBUG=1 cargo test --frozen --jobs 4 \
     --config 'profile.dev.package."*".opt-level=0' -- --test-threads 4
-  bun test scripts/files.test.ts
+  bun test scripts/files.test.ts scripts/picker.test.ts
   python -m unittest discover -s scripts -p test_distribution.py
   desktop-file-validate "$srcdir/herdr-app.desktop"
   [[ $("$srcdir/target/release/herdr-app" --version) == "herdr-app $pkgver" ]]
