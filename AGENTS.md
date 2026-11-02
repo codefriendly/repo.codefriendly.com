@@ -107,7 +107,20 @@ scripts.
    `.SRCINFO`, so failed updates do not dirty the repository.
 3. Update `PKGBUILD`, regenerate `.SRCINFO` with
    `makepkg --printsrcinfo > .SRCINFO`, and run a real test build before
-   finalizing the update:
+   finalizing the update. Use the Docker builder whenever Docker is available
+   (see "Container builds" in `MAINTAINING.md`). It reads recipes only from
+   `packages/arch/<pkgbase>/`, so build from a detached worktree under `/tmp`
+   that has the updated recipe but no downloaded sources:
+
+   ```bash
+   git worktree add --detach /tmp/<name>/wt HEAD
+   # copy the updated recipe files into /tmp/<name>/wt/packages/arch/<pkgbase>/
+   cd /tmp/<name>/wt && scripts/build arch <pkgbase> --output /tmp/<name>/out
+   ```
+
+   Remove the worktree with `git worktree remove` when the update is done.
+   Fall back to a native build only as a last resort, when Docker is
+   unavailable or cannot build the package, and report why:
 
    ```bash
    makepkg --cleanbuild --clean --noconfirm
