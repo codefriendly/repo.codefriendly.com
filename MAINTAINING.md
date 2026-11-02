@@ -327,10 +327,24 @@ were not confirmed. The six initial packages use midnight UTC for unknown times;
 this placeholder does not claim a known publication time.
 There is no binary-upload script yet. A future publisher must run this command
 only after its public verification succeeds. Recording a release does not deploy
-the website; that action still needs explicit approval.
+the website by itself. A publication request includes recording the verified
+releases, building and checking the site, deploying the contents of `site/dist/`,
+and verifying the live pages. Do not stop after uploading the package artifacts.
 
-Manifest approval never replaces the owner's explicit confirmation for a public
-action. Keep package signing keys outside build environments and web roots.
+Interpret natural-language requests by intent, not exact wording;
+"commit/push/publish" is an example, not a required command. A publication request
+includes its corresponding website deployment. A commit/push-only request does
+not authorize publication.
+
+An explicit request to commit, push, and publish authorizes the complete release for the
+identified packages and established targets, including recipe and release-record
+commits and pushes, artifact signing and upload, repository metadata, public
+verification, and the corresponding website deployment. Announce the targets and
+proceed without another confirmation for each step. Ask again only if the scope
+or target changes, a target remains ambiguous, or a new destructive action is
+required. Preserve existing remote artifacts. Planning language and manifest
+approval alone do not authorize publication. Keep package signing keys outside
+build environments and web roots.
 
 ## Publishing to AUR
 

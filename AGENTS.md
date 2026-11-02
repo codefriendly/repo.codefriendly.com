@@ -19,7 +19,9 @@ with `npm --prefix site run build`. Keep published package versions distinct fro
 local source versions. Keep Arch-specific content inside the Arch Linux section.
 Build and check before deployment. Deploy only the contents of `site/dist/`,
 not templates, build scripts, source CSS, dependencies or development docs.
-Obtain explicit confirmation before any live website change.
+Live website changes require explicit authorization. A package publication
+request includes deploying the generated pages and assets that reference those
+releases; do not request separate confirmation for that deployment.
 Package data comes from `packages/arch/manifest.toml` and `.SRCINFO`.
 After a verified binary publication, record its version and timestamp with
 `python3 scripts/catalog.py --record-release <pkgbase> <version-pkgrel>`.
@@ -40,6 +42,25 @@ restrictions: Sononym is AUR-only unless written vendor permission is obtained.
 Do not publish debug packages. `published_version` describes a released artifact,
 not necessarily the latest local recipe. No AUR action is authorized merely by
 a manifest entry.
+
+## Release authorization
+
+Interpret natural-language requests by intent, not exact wording. The phrase
+"commit/push/publish" is an example, not a required command. A publication request
+includes the corresponding website deployment; a commit/push-only request does
+not authorize publication.
+
+An explicit request to commit, push, and publish authorizes the complete release for the
+identified packages and established targets: validate and build, commit and push
+recipe changes, sign and upload approved artifacts and repository metadata,
+verify public artifacts and repository installation, record released versions,
+regenerate and check the catalog, deploy `site/dist/`, verify the live pages,
+and commit and push release records and generated tracked files. "Publish"
+includes the website updates that keep the catalog aligned with released packages.
+Announce the targets and proceed; do not ask for confirmation again at each step.
+Ask only if scope or target changes, a target remains ambiguous, or a new
+destructive action is required. Preserve existing remote artifacts. Manifest
+entries and planning language alone do not authorize publication.
 
 ## Checking for upstream updates
 
