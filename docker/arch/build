@@ -25,6 +25,19 @@ exec sudo -u builder env PKGDEST=/output LOGDEST=/output bash -c '
     echo "Stale .SRCINFO: regenerate it with makepkg --printsrcinfo." >&2
     exit 1
   fi
+  # Import recipe-provided source signing keys, as devtools does. Each file must
+  # contain the key named by its fingerprint; makepkg still enforces validpgpkeys.
+  shopt -s nullglob
+  for key in keys/pgp/*.asc; do
+    expected=$(basename "$key" .asc)
+    actual=$(gpg --batch --show-keys --with-colons "$key" | awk -F: '\''$1 == "fpr" { print $10; exit }'\'')
+    if [[ $actual != "$expected" ]]; then
+      echo "Key file $key does not contain key $expected." >&2
+      exit 1
+    fi
+    gpg --batch --quiet --import "$key"
+  done
+  shopt -u nullglob
   makepkg --cleanbuild --clean --syncdeps --noconfirm --log
   # A recipe can override makepkg.conf. Do not export debug packages.
   shopt -s nullglob
