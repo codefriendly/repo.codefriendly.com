@@ -57,6 +57,7 @@ To check reproducibility, save checksums for the files in `dist/`, rebuild, and 
 - After public verification, record the release with `python3 scripts/catalog.py --record-release pkgbase version-pkgrel` before building the site. This replaces the package's published version and timestamp in the manifest. Follow `MAINTAINING.md` for timestamp handling. This local command does not publish anything. Do not infer release dates from Git commits or builds.
 - Keep package versions and download URLs synchronized with the published repository, not simply the packaging source tree.
 - Separate ready-to-install binaries from AUR/self-build recipes. Sononym is AUR-only; no Sononym or debug binaries are hosted.
+- Packages with `local_build = true` appear under "Build locally" with sparse-checkout and `makepkg -si` instructions. Use it for recipes we can't redistribute and don't maintain on AUR. Nothing is hosted for them.
 - Keep every Arch-specific instruction, artifact link, and signing-key reference inside the Arch Linux section.
 - Check the public-key fingerprint, expiry, package signatures, and database signature policy whenever signing configuration changes.
 - Keep verification separate from commands that grant trust. Never suggest partial upgrades or disabling signatures.

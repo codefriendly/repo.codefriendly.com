@@ -17,11 +17,13 @@ Inclusion does not imply that CodeFriendly is the current AUR maintainer.
 | Package | Install method | Command |
 | --- | --- | --- |
 | [cliamp](packages/arch/cliamp) | Signed binary repository | `sudo pacman -S cliamp` |
+| [connectiq-sdk-manager](packages/arch/connectiq-sdk-manager) | [Recipe — build locally](https://repo.codefriendly.com/packages.html#local-build) | `makepkg -si` |
 | [herdr](packages/arch/herdr) | Signed binary repository | `sudo pacman -S herdr` |
 | [herdr-core](packages/arch/herdr-core) | Signed binary repository | `sudo pacman -S herdr-core` |
 | [herdr-desktop](packages/arch/herdr-desktop) | Signed binary repository | `sudo pacman -S herdr-desktop` |
 | [monstar](packages/arch/monstar) | Signed binary repository | `sudo pacman -S monstar` |
 | [pangolin](packages/arch/pangolin) | Signed binary repository | `sudo pacman -S pangolin` |
+| [rar](packages/arch/rar) | [Recipe — build locally](https://repo.codefriendly.com/packages.html#local-build) | `makepkg -si` |
 | [remanager](packages/arch/remanager) | Signed binary repository | `sudo pacman -S remanager` |
 | [sononym](packages/arch/sononym) | [AUR — build locally](https://aur.archlinux.org/packages/sononym) | `paru -S sononym` |
 | [strata-fm](packages/arch/strata-fm) | Signed binary repository | `sudo pacman -S strata-fm` |
@@ -33,6 +35,10 @@ before using its pacman command. AUR commands require an AUR helper such as
 
 Only Sononym is currently maintained by CodeFriendly on AUR. Its vendor license
 does not permit us to redistribute the application, so no Sononym binary is hosted.
+
+Recipe packages build locally with `makepkg -si` from their package directory.
+Their licenses prohibit redistribution, so each build downloads the software
+from its vendor. See the [build instructions](https://repo.codefriendly.com/packages.html#local-build).
 
 Other directories under [`packages/arch/`](packages/arch/) are **recipe only**:
 their publication targets have not been reviewed. Debug packages are not hosted.

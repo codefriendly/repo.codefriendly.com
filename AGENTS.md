@@ -40,7 +40,9 @@ without writing files. The build needs uv, Python 3.11+, Node.js 20+ and npm.
 
 `packages/arch/manifest.toml` is an opt-in allowlist, not an inventory of every
 recipe. `binary_repo` permits binary publication; `aur_maintainer` records the
-owner's AUR maintainership. Unlisted recipes are not approved for either target.
+owner's AUR maintainership. `local_build` lists a recipe on the website with
+local `makepkg` build instructions only; it excludes the other two targets and
+hosts nothing. Unlisted recipes are not approved for any target.
 Check `python3 scripts/catalog.py --allow-binary <pkgbase>` before staging any
 binary. AUR publication checks its target automatically. Respect redistribution
 restrictions: Sononym is AUR-only unless written vendor permission is obtained.

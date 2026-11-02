@@ -34,9 +34,11 @@ def manifest():
             raise ValueError(f"{name}: missing or invalid architecture")
         if "published_version" in record and not re.fullmatch(r"[A-Za-z0-9._+~-]+", record["published_version"]):
             raise ValueError(f"{name}: invalid published_version")
-        for flag in ("debug_package", "source_archive"):
+        for flag in ("debug_package", "source_archive", "local_build"):
             if type(record.get(flag, False)) is not bool:
                 raise ValueError(f"{name}: {flag} must be boolean")
+        if record.get("local_build") and (record["binary_repo"] or record["aur_maintainer"]):
+            raise ValueError(f"{name}: local_build excludes binary_repo and aur_maintainer")
         if "published_at" in record:
             if "published_version" not in record:
                 raise ValueError(f"{name}: published_at requires published_version")
@@ -65,9 +67,9 @@ def site_pages(records):
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    binary_packages, aur_packages = [], []
+    binary_packages, aur_packages, local_packages = [], [], []
     for name, record in sorted(records.items()):
-        if not (record["binary_repo"] or record["aur_maintainer"]):
+        if not (record["binary_repo"] or record["aur_maintainer"] or record.get("local_build")):
             continue
         package = {
             "name": name,
@@ -78,6 +80,8 @@ def site_pages(records):
         }
         if record["aur_maintainer"]:
             aur_packages.append(package)
+        if record.get("local_build"):
+            local_packages.append(package)
         if record["binary_repo"] and "published_version" in record:
             version, architecture = record["published_version"], record["architecture"]
             names = [name, name + "-debug"] if record.get("debug_package") else [name]
@@ -99,7 +103,8 @@ def site_pages(records):
     ]
     return {
         ROOT / "site" / "dist" / name: environment.get_template(name + ".j2").render(
-            binary_packages=binary_packages, aur_packages=aur_packages, recent_releases=recent,
+            binary_packages=binary_packages, aur_packages=aur_packages, local_packages=local_packages,
+            recent_releases=recent,
         )
         for name in ("index.html", "packages.html")
     }
@@ -113,6 +118,8 @@ def readme_catalog(records):
             rows.append(f"| {source} | Signed binary repository | `sudo pacman -S {name}` |")
         if record["aur_maintainer"]:
             rows.append(f"| {source} | [AUR — build locally](https://aur.archlinux.org/packages/{name}) | `paru -S {name}` |")
+        if record.get("local_build"):
+            rows.append(f"| {source} | [Recipe — build locally](https://repo.codefriendly.com/packages.html#local-build) | `makepkg -si` |")
     return "\n".join(rows)
 
 

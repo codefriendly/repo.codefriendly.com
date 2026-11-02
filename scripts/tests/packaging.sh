@@ -144,7 +144,14 @@ description = 'A <tool> & helper'
 binary_repo = false
 aur_maintainer = true
 description = 'AUR-only fixture'
+
+[local-fixture]
+binary_repo = false
+aur_maintainer = false
+local_build = true
+description = 'Local-build fixture'
 MANIFEST
+cp -r packages/arch/layout-fixture packages/arch/local-fixture
 expect_failure uv run --locked scripts/catalog.py --check
 [[ ! -e site/dist ]]
 uv run --locked scripts/catalog.py
@@ -152,6 +159,15 @@ uv run --locked scripts/catalog.py --check
 grep -Fq 'A &lt;tool&gt; &amp; helper' site/dist/packages.html
 grep -Fq 'href="https://aur.archlinux.org/packages/aur-fixture"' site/dist/packages.html
 ! sed -n '/<section id="binary-repository"/,/<section id="aur"/p' site/dist/packages.html | grep -Fq 'aur-fixture'
+sed -n '/<section id="local-build"/,$p' site/dist/packages.html | grep -Fq 'sparse-checkout set packages/arch/local-fixture'
+! sed -n '/<section id="binary-repository"/,/<section id="local-build"/p' site/dist/packages.html | grep -Fq 'local-fixture'
+grep -Fq '| [local-fixture](packages/arch/local-fixture) | [Recipe — build locally]' README.md
+expect_failure python3 scripts/catalog.py --allow-binary local-fixture
+expect_failure python3 scripts/catalog.py --allow-aur local-fixture
+cp packages/arch/manifest.toml "$tmp/manifest.toml"
+sed -i '/^\[local-fixture\]/,/^description/ s/^binary_repo = false/binary_repo = true\narchitecture = "x86_64"/' packages/arch/manifest.toml
+expect_failure uv run --locked scripts/catalog.py --check
+cp "$tmp/manifest.toml" packages/arch/manifest.toml
 grep -Fq 'href="https://repo.codefriendly.com/arch/sources/layout-fixture-2.4.0-3.src.tar.zst">Source archive</a>' site/dist/packages.html
 printf '\nStale output\n' >> site/dist/index.html
 cp site/dist/index.html "$tmp/stale-index.html"

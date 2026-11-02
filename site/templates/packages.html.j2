@@ -1,6 +1,6 @@
 {% extends "base.html.j2" %}
 {% block title %}Packages{% endblock %}
-{% block description %}Browse CodeFriendly's signed Arch Linux packages and separately maintained AUR recipes, with downloads, signatures and sources.{% endblock %}
+{% block description %}Browse CodeFriendly's signed Arch Linux packages, AUR recipes and build-locally recipes, with downloads, signatures and sources.{% endblock %}
 {% block content %}
     <div class="intro">
       <h1>Packages.</h1>
@@ -45,5 +45,28 @@
         </article>
 {% endfor %}
       </section>
+{% if local_packages %}
+      <section id="local-build" class="catalog" aria-labelledby="local-build-title">
+        <h3 id="local-build-title">Build locally</h3>
+        <p class="catalog-intro">CodeFriendly recipes for software we can't redistribute. Each build downloads the software from its vendor. Review the recipe and the vendor's license before building.</p>
+{% for package in local_packages %}
+        <article class="package" id="package-{{ package.name }}">
+          <div class="package-heading"><h4><a href="{{ package.packaging_source }}">{{ package.name }}</a></h4></div>
+          <div class="package-content">
+            <p>{{ package.description }}</p>
+            <p class="package-links"><a href="{{ package.packaging_source }}">Packaging source</a> · <a href="{{ package.upstream }}">Upstream project</a></p>
+            <div class="command" data-copy-label="{{ package.name }} recipe download commands" data-copy-mode="lines"><pre><code>git clone --depth 1 --filter=blob:none --sparse https://github.com/codefriendly/repo.codefriendly.com.git
+git -C repo.codefriendly.com sparse-checkout set packages/arch/{{ package.name }}
+cd repo.codefriendly.com/packages/arch/{{ package.name }}</code></pre></div>
+            <div class="command" data-copy-label="{{ package.name }} build command"><pre><code>makepkg -si</code></pre></div>
+            <p class="note">Read <code>PKGBUILD</code> before running <code>makepkg</code>. It installs build dependencies and the finished package with pacman. To update, run <code>git pull</code> in the clone and build again.</p>
+{% if package.reason %}
+            <p class="note">{{ package.reason }}</p>
+{% endif %}
+          </div>
+        </article>
+{% endfor %}
+      </section>
+{% endif %}
     </section>
 {% endblock %}

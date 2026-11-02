@@ -82,3 +82,17 @@ binary_repo = false
 aur_maintainer = true
 description = "Audio sample manager and categorizer."
 reason = "Vendor license prohibits redistribution without written permission; download from the vendor and build locally through AUR."
+
+[connectiq-sdk-manager]
+binary_repo = false
+aur_maintainer = false
+local_build = true
+description = "Garmin's Connect IQ SDK Manager, adapted to current WebKitGTK and libsoup."
+reason = "Garmin's license prohibits redistribution; the build downloads the SDK Manager from Garmin."
+
+[rar]
+binary_repo = false
+aur_maintainer = false
+local_build = true
+description = "The command-line RAR compression utility."
+reason = "The RAR license prohibits repackaging; the build downloads RAR from RARLAB."
