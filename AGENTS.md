@@ -21,7 +21,12 @@ Build and check before deployment. Deploy only the contents of `site/dist/`,
 not templates, build scripts, source CSS, dependencies or development docs.
 Live website changes require explicit authorization. A package publication
 request includes deploying the generated pages and assets that reference those
-releases; do not request separate confirmation for that deployment.
+releases; do not request separate confirmation for that deployment. After a
+publication is verified, remove the remote backups and staging files created
+for that publication. Use them only for rollback during the publication; if
+verification fails, roll back before removing them. If rollback cannot be
+completed, report the files and ask how to proceed. Do not remove unrelated
+existing files.
 Package data comes from `packages/arch/manifest.toml` and `.SRCINFO`.
 After a verified binary publication, record its version and timestamp with
 `python3 scripts/catalog.py --record-release <pkgbase> <version-pkgrel>`.

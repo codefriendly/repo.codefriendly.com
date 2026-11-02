@@ -330,6 +330,11 @@ only after its public verification succeeds. Recording a release does not deploy
 the website by itself. A publication request includes recording the verified
 releases, building and checking the site, deploying the contents of `site/dist/`,
 and verifying the live pages. Do not stop after uploading the package artifacts.
+Use remote backups and staging files only for rollback during the publication.
+After successful public verification, remove the files created for that
+publication. If verification fails, roll back before removing them. If rollback
+cannot be completed, report the files and ask how to proceed. Do not remove
+unrelated existing files.
 
 Interpret natural-language requests by intent, not exact wording;
 "commit/push/publish" is an example, not a required command. A publication request
