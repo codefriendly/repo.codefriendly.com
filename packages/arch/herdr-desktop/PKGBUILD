@@ -1,8 +1,8 @@
 # Adapted from herdr-app-bin, maintained by Qingxu <me@linioi.com>.
 pkgname=herdr-desktop
-pkgver=0.1.11
+pkgver=0.1.12
 pkgrel=1
-_commit=e12fd31866f33cb613922d0b33ea506e6f23ce3c
+_commit=4aa3460749947e7771aa39a8a2cec58d46649926
 _ghosttycommit=291fd050b9e9c293c8adb6a140742649b7e42d3a
 _zigver=0.16.0
 pkgdesc='Native desktop workspace for terminals and coding agents that keep running'
@@ -28,7 +28,7 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz"
         'https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate'
         'herdr-app.desktop' 'PACKAGING.md' 'pacman-updates.patch')
 noextract=('option-ext-0.2.0.crate')
-sha256sums=('c9bbc6a8ddf1886d364cb1ec74ed3de162dc2bc7ce5af5c98ec1b67895cdc50e'
+sha256sums=('e2ed6fb44b9ea93e6bfc2c6156cc41af52c1a3f2320af7b5e11017183db0a3a0'
             'f35b464f1aee22ffda9f6359038b9ad18a784342b4a4fa1cb97a79fb9ade79a4'
             '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
             '04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d'

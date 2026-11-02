@@ -1,6 +1,6 @@
 pkgbase = herdr-desktop
 	pkgdesc = Native desktop workspace for terminals and coding agents that keep running
-	pkgver = 0.1.11
+	pkgver = 0.1.12
 	pkgrel = 1
 	url = https://github.com/herdrdev/herdr-app
 	arch = x86_64
@@ -42,21 +42,21 @@ pkgbase = herdr-desktop
 	optdepends = vulkan-driver: GPU rendering (required in a desktop session)
 	optdepends = git: repository status and Git actions
 	optdepends = xdg-utils: open links with the default application
-	provides = herdr-app=0.1.11
+	provides = herdr-app=0.1.12
 	conflicts = herdr-app
 	conflicts = herdr-app-bin
 	conflicts = herdr-app-desktop-bin
 	noextract = option-ext-0.2.0.crate
 	options = !debug
 	options = !lto
-	source = herdr-desktop-0.1.11.tar.gz::https://github.com/herdrdev/herdr-app/archive/e12fd31866f33cb613922d0b33ea506e6f23ce3c.tar.gz
+	source = herdr-desktop-0.1.12.tar.gz::https://github.com/herdrdev/herdr-app/archive/4aa3460749947e7771aa39a8a2cec58d46649926.tar.gz
 	source = ghostty-291fd050b9e9c293c8adb6a140742649b7e42d3a.tar.gz::https://github.com/ghostty-org/ghostty/archive/291fd050b9e9c293c8adb6a140742649b7e42d3a.tar.gz
 	source = https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz
 	source = https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate
 	source = herdr-app.desktop
 	source = PACKAGING.md
 	source = pacman-updates.patch
-	sha256sums = c9bbc6a8ddf1886d364cb1ec74ed3de162dc2bc7ce5af5c98ec1b67895cdc50e
+	sha256sums = e2ed6fb44b9ea93e6bfc2c6156cc41af52c1a3f2320af7b5e11017183db0a3a0
 	sha256sums = f35b464f1aee22ffda9f6359038b9ad18a784342b4a4fa1cb97a79fb9ade79a4
 	sha256sums = 70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00
 	sha256sums = 04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d
