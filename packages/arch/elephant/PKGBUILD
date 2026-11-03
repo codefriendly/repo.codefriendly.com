@@ -56,7 +56,7 @@ declare -A _optdepends=(
 for _p in "${_providers[@]}"; do
   eval "package_elephant-$_p() {
     pkgdesc='$_p provider for Elephant'
-    depends=('elephant=$pkgver-$pkgrel' ${_depends[$_p]})
+    depends=('elephant=$pkgver-$pkgrel' 'glibc' ${_depends[$_p]})
     ${_optdepends[$_p]:+optdepends=(${_optdepends[$_p]})}
     conflicts=('elephant-$_p-bin')
     _package_provider $_p
@@ -65,6 +65,8 @@ done
 eval "package_elephant-all() {
   pkgdesc='Elephant with its general-purpose providers'
   arch=('any')
+  # A metapackage installs no files, so it carries only Elephant's license.
+  license=('GPL-3.0-only')
   depends=('elephant=$pkgver-$pkgrel' $(printf "'elephant-%s=$pkgver-$pkgrel' " "${_general[@]}"))
   optdepends=($(printf "'elephant-%s: app- or compositor-specific provider' " "${_specific[@]}"))
   conflicts=('elephant-all-bin')
@@ -151,6 +153,7 @@ check() {
 }
 
 package_elephant() {
+  depends=('glibc')
   optdepends=('walker: launcher frontend'
               'elephant-all: general-purpose providers')
   conflicts=('elephant-bin')

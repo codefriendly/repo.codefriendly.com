@@ -22,6 +22,7 @@ pkgbase = elephant
 	sha256sums = SKIP
 
 pkgname = elephant
+	depends = glibc
 	optdepends = walker: launcher frontend
 	optdepends = elephant-all: general-purpose providers
 	conflicts = elephant-bin
@@ -29,17 +30,20 @@ pkgname = elephant
 pkgname = elephant-archlinuxpkgs
 	pkgdesc = archlinuxpkgs provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-archlinuxpkgs-bin
 
 pkgname = elephant-bluetooth
 	pkgdesc = bluetooth provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = bluez-utils
 	conflicts = elephant-bluetooth-bin
 
 pkgname = elephant-bookmarks
 	pkgdesc = bookmarks provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = jq
 	depends = sqlite
 	conflicts = elephant-bookmarks-bin
@@ -47,12 +51,14 @@ pkgname = elephant-bookmarks
 pkgname = elephant-calc
 	pkgdesc = calc provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = libqalculate
 	conflicts = elephant-calc-bin
 
 pkgname = elephant-clipboard
 	pkgdesc = clipboard provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = wl-clipboard
 	depends = imagemagick
 	optdepends = tesseract: text recognition in copied images
@@ -62,11 +68,13 @@ pkgname = elephant-clipboard
 pkgname = elephant-desktopapplications
 	pkgdesc = desktopapplications provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-desktopapplications-bin
 
 pkgname = elephant-files
 	pkgdesc = files provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = fd
 	depends = wl-clipboard
 	optdepends = localsend: send files
@@ -75,65 +83,77 @@ pkgname = elephant-files
 pkgname = elephant-menus
 	pkgdesc = menus provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-menus-bin
 
 pkgname = elephant-playerctl
 	pkgdesc = playerctl provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = playerctl
 	conflicts = elephant-playerctl-bin
 
 pkgname = elephant-providerlist
 	pkgdesc = providerlist provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-providerlist-bin
 
 pkgname = elephant-runner
 	pkgdesc = runner provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-runner-bin
 
 pkgname = elephant-snippets
 	pkgdesc = snippets provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = wtype
 	conflicts = elephant-snippets-bin
 
 pkgname = elephant-symbols
 	pkgdesc = symbols provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-symbols-bin
 
 pkgname = elephant-todo
 	pkgdesc = todo provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	optdepends = libnotify: notifications
 	conflicts = elephant-todo-bin
 
 pkgname = elephant-unicode
 	pkgdesc = unicode provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-unicode-bin
 
 pkgname = elephant-websearch
 	pkgdesc = websearch provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-websearch-bin
 
 pkgname = elephant-windows
 	pkgdesc = windows provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	conflicts = elephant-windows-bin
 
 pkgname = elephant-wireplumber
 	pkgdesc = wireplumber provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = wireplumber
 	conflicts = elephant-wireplumber-bin
 
 pkgname = elephant-1password
 	pkgdesc = 1password provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = wl-clipboard
 	optdepends = 1password-cli: the op command (not in the Arch repositories)
 	optdepends = libnotify: notifications
@@ -142,6 +162,7 @@ pkgname = elephant-1password
 pkgname = elephant-bitwarden
 	pkgdesc = bitwarden provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = rbw
 	depends = wl-clipboard
 	optdepends = libnotify: notifications
@@ -150,6 +171,7 @@ pkgname = elephant-bitwarden
 pkgname = elephant-protonpass
 	pkgdesc = protonpass provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = wl-clipboard
 	optdepends = proton-pass-cli: the pass-cli command (not in the Arch repositories)
 	optdepends = libnotify: notifications
@@ -158,18 +180,21 @@ pkgname = elephant-protonpass
 pkgname = elephant-niriactions
 	pkgdesc = niriactions provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = niri
 	conflicts = elephant-niriactions-bin
 
 pkgname = elephant-nirisessions
 	pkgdesc = nirisessions provider for Elephant
 	depends = elephant=2.22.1-1
+	depends = glibc
 	depends = niri
 	conflicts = elephant-nirisessions-bin
 
 pkgname = elephant-all
 	pkgdesc = Elephant with its general-purpose providers
 	arch = any
+	license = GPL-3.0-only
 	depends = elephant=2.22.1-1
 	depends = elephant-archlinuxpkgs=2.22.1-1
 	depends = elephant-bluetooth=2.22.1-1
