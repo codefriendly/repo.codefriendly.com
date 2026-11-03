@@ -18,6 +18,7 @@ Inclusion does not imply that CodeFriendly is the current AUR maintainer.
 | --- | --- | --- |
 | [cliamp](packages/arch/cliamp) | Signed binary repository | `sudo pacman -S cliamp` |
 | [connectiq-sdk-manager](packages/arch/connectiq-sdk-manager) | [Recipe — build locally](https://repo.codefriendly.com/packages.html#local-build) | `makepkg -si` |
+| [elephant](packages/arch/elephant) | Signed binary repository (25 split packages) | `sudo pacman -S elephant-all` |
 | [herdr](packages/arch/herdr) | Signed binary repository | `sudo pacman -S herdr` |
 | [herdr-core](packages/arch/herdr-core) | Signed binary repository | `sudo pacman -S herdr-core` |
 | [herdr-desktop](packages/arch/herdr-desktop) | Signed binary repository | `sudo pacman -S herdr-desktop` |
