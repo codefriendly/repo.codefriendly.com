@@ -87,6 +87,12 @@
   .package-content p + p { @apply mt-3; }
   .package-links { @apply text-sm leading-7; }
   .package-content .command { @apply max-w-xl; }
+  .split-packages { @apply mt-4; }
+  .split-packages summary { @apply cursor-pointer text-sm text-brand-teal underline underline-offset-4; }
+  .split-packages ul { @apply mt-3 grid gap-x-4 sm:grid-cols-[auto_1fr_auto]; }
+  .split-packages li { @apply grid scroll-mt-6 border-t border-brand-line py-2 text-sm sm:col-span-3 sm:grid-cols-subgrid; }
+  .split-packages li code { @apply font-semibold whitespace-normal break-all; }
+  .split-packages li .package-links { @apply sm:text-right; }
   .reference .command { @apply p-4; }
   .text-link { @apply mt-4 inline-block text-sm font-semibold; }
   .key-name { @apply font-semibold; }

@@ -18,12 +18,29 @@
 {% for package in binary_packages %}
         <article class="package" id="package-{{ package.name }}">
           <div class="package-heading">
-            <h4><a href="{{ package.download }}">{{ package.name }}</a></h4>
+            <h4><a href="{{ package.download or package.packaging_source }}">{{ package.name }}</a></h4>
             <span class="version">{{ package.version }}</span>
           </div>
           <div class="package-content">
             <p>{{ package.description }}</p>
+{% if package.split %}
+            <div class="command" data-copy-label="{{ package.install }} installation command"><pre><code>sudo pacman -S {{ package.install }}</code></pre></div>
+            <details class="split-packages">
+              <summary>All {{ package.split | length }} packages built from {{ package.name }}</summary>
+              <ul>
+{% for member in package.split %}
+                <li{% if member.name != package.name %} id="package-{{ member.name }}"{% endif %}>
+                  <code>{{ member.name }}</code>
+                  <span>{{ member.description }}</span>
+                  <span class="package-links"><a href="{{ member.download }}">Download</a> · <a href="{{ member.download }}.sig">Signature</a></span>
+                </li>
+{% endfor %}
+              </ul>
+            </details>
+            <p class="package-links">{% if package.source_archive %}<a href="{{ package.source_archive }}">Source archive</a> · {% endif %}<a href="{{ package.packaging_source }}">Packaging source</a> · <a href="{{ package.upstream }}">Upstream project</a></p>
+{% else %}
             <p class="package-links"><a href="{{ package.download }}">Download</a> · <a href="{{ package.download }}.sig">Signature</a>{% if package.source_archive %} · <a href="{{ package.source_archive }}">Source archive</a>{% endif %} · <a href="{{ package.packaging_source }}">Packaging source</a> · <a href="{{ package.upstream }}">Upstream project</a></p>
+{% endif %}
           </div>
         </article>
 {% endfor %}

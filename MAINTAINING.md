@@ -284,6 +284,11 @@ python3 scripts/tests/strata-licenses.py
 - `aur_maintainer = true`: owned/maintained by CodeFriendly on AUR.
 - `source_archive = true`: link the matching `<pkgbase>-<published_version>.src.tar.zst`
   under `/arch/sources/`. Upload and verify it before publishing the binary.
+- Split packages are listed from `.SRCINFO`: one catalog card per `pkgbase`
+  with every `pkgname`, its description and download links. Packages with
+  `arch=('any')` keep `-any` in their file names under the architecture
+  directory. `install = "<pkgname>"` chooses the package that install commands
+  name, such as a metapackage; it defaults to the `pkgbase`.
 - Unlisted recipes default to neither target. Importing does not grant permission
   to redistribute an application or claim its AUR maintainership.
 

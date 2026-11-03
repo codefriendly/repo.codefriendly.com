@@ -39,6 +39,10 @@ def manifest():
                 raise ValueError(f"{name}: {flag} must be boolean")
         if record.get("local_build") and (record["binary_repo"] or record["aur_maintainer"]):
             raise ValueError(f"{name}: local_build excludes binary_repo and aur_maintainer")
+        if "install" in record:
+            names = [package["name"] for package in srcinfo(name)[1]]
+            if record["install"] not in names:
+                raise ValueError(f"{name}: install must name one of its packages: {', '.join(names)}")
         if "published_at" in record:
             if "published_version" not in record:
                 raise ValueError(f"{name}: published_at requires published_version")
@@ -48,12 +52,43 @@ def manifest():
     return records
 
 
-def upstream(name):
-    # Read metadata without executing the PKGBUILD.
+def srcinfo(name):
+    """Read base metadata and each package's name, description and architectures.
+
+    Reads .SRCINFO without executing the PKGBUILD. Package sections inherit
+    pkgdesc and arch from the pkgbase section unless they override them.
+    """
+    base, packages, current = {}, [], None
     for line in (ARCH / name / ".SRCINFO").read_text().splitlines():
-        if line.strip().startswith("url = "):
-            return line.strip().removeprefix("url = ")
-    raise ValueError(f"Missing upstream URL for {name}")
+        key, separator, value = line.strip().partition(" = ")
+        if not separator:
+            continue
+        if key == "pkgname":
+            current = {"name": value}
+            packages.append(current)
+        elif key in {"url", "pkgdesc", "arch"}:
+            target = base if current is None else current
+            if key == "arch":
+                target.setdefault("arch", []).append(value)
+            else:
+                target[key] = value
+    if "url" not in base:
+        raise ValueError(f"Missing upstream URL for {name}")
+    if not packages:
+        raise ValueError(f"Missing pkgname for {name}")
+    for package in packages:
+        package.setdefault("pkgdesc", base.get("pkgdesc", ""))
+        package.setdefault("arch", base.get("arch", []))
+    return base, packages
+
+
+def upstream(name):
+    return srcinfo(name)[0]["url"]
+
+
+def install_name(name, record):
+    """Return the package that install commands name; a split package may choose one."""
+    return record.get("install", name)
 
 
 def site_pages(records):
@@ -71,12 +106,15 @@ def site_pages(records):
     for name, record in sorted(records.items()):
         if not (record["binary_repo"] or record["aur_maintainer"] or record.get("local_build")):
             continue
+        base, split = srcinfo(name)
         package = {
             "name": name,
+            "install": install_name(name, record),
             "description": record.get("description", ""),
             "packaging_source": f"{SOURCE}/{name}",
-            "upstream": upstream(name),
+            "upstream": base["url"],
             "reason": record.get("reason", ""),
+            "split": None,
         }
         if record["aur_maintainer"]:
             aur_packages.append(package)
@@ -84,6 +122,30 @@ def site_pages(records):
             local_packages.append(package)
         if record["binary_repo"] and "published_version" in record:
             version, architecture = record["published_version"], record["architecture"]
+            source_archive = f"{SERVER}/sources/{name}-{version}.src.tar.zst" if record.get("source_archive") else None
+
+            def download(binary, arch=architecture):
+                # Architecture-independent packages keep -any in their file names
+                # but are served from the repository's architecture directory.
+                return f"{SERVER}/{architecture}/{binary}-{version}-{arch}.pkg.tar.zst"
+
+            if len(split) > 1:
+                # A split package is one card that lists every package it builds.
+                binary_packages.append({
+                    **package,
+                    "version": version,
+                    "download": None,
+                    "source_archive": source_archive,
+                    "split": [
+                        {
+                            "name": member["name"],
+                            "description": member["pkgdesc"],
+                            "download": download(member["name"], "any" if member["arch"] == ["any"] else architecture),
+                        }
+                        for member in split
+                    ],
+                })
+                continue
             names = [name, name + "-debug"] if record.get("debug_package") else [name]
             for binary in names:
                 binary_packages.append({
@@ -91,8 +153,8 @@ def site_pages(records):
                     "name": binary,
                     "version": version,
                     "description": package["description"] if binary == name else f"Debugging symbols for {name}.",
-                    "download": f"{SERVER}/{architecture}/{binary}-{version}-{architecture}.pkg.tar.zst",
-                    "source_archive": f"{SERVER}/sources/{name}-{version}.src.tar.zst" if record.get("source_archive") else None,
+                    "download": download(binary),
+                    "source_archive": source_archive,
                 })
     recent = [
         {"name": name, "version": record["published_version"], "date": record["published_at"].date().isoformat()}
@@ -115,7 +177,9 @@ def readme_catalog(records):
     for name, record in sorted(records.items()):
         source = f"[{name}](packages/arch/{name})"
         if record["binary_repo"] and "published_version" in record:
-            rows.append(f"| {source} | Signed binary repository | `sudo pacman -S {name}` |")
+            count = len(srcinfo(name)[1])
+            method = f"Signed binary repository ({count} split packages)" if count > 1 else "Signed binary repository"
+            rows.append(f"| {source} | {method} | `sudo pacman -S {install_name(name, record)}` |")
         if record["aur_maintainer"]:
             rows.append(f"| {source} | [AUR — build locally](https://aur.archlinux.org/packages/{name}) | `paru -S {name}` |")
         if record.get("local_build"):

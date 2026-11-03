@@ -23,7 +23,7 @@ Jinja and its dependency are pinned in `scripts/catalog.py.lock`. The build uses
 
 ## Source files
 
-- `packages/arch/manifest.toml`: package descriptions, publication targets, latest released versions, publication timestamps and source-archive availability. This is the catalog's source of truth. The sidebar shows the five packages with the newest `published_at` timestamps, one entry per package. It uses each package's `published_version` and links to its catalog anchor. No release history is kept. The list is hidden when no binary package has a timestamp.
+- `packages/arch/manifest.toml`: package descriptions, publication targets, latest released versions, publication timestamps and source-archive availability. This is the catalog's source of truth. A split package's `.SRCINFO` supplies its package names and descriptions; the catalog shows them as one card per `pkgbase`, and the optional `install` key names the package its install command uses. The sidebar shows the five packages with the newest `published_at` timestamps, one entry per package. It uses each package's `published_version` and links to its catalog anchor. No release history is kept. The list is hidden when no binary package has a timestamp.
 - `packages/arch/<pkgbase>/.SRCINFO`: upstream project URLs. The generator reads this metadata without executing recipes.
 - `templates/base.html.j2`: shared head, top anchor navigation, footer and asset references.
 - `templates/index.html.j2`: setup guide and signing details.

@@ -268,3 +268,46 @@ uv run --locked scripts/catalog.py
 grep -Fq 'pending-fixture-3.0-2-x86_64.pkg.tar.zst' site/dist/packages.html
 grep -Fq '| pending-fixture | 3.0-2 | 2026-01-04 | No |' PACKAGE-REVIEW.local.md
 printf 'PASS: new approved packages stay unlisted until their first verified publication\n'
+
+# A split package is one catalog card listing every package it builds.
+mkdir packages/arch/split-fixture
+cat > packages/arch/split-fixture/PKGBUILD <<'PKGBUILD'
+pkgbase=split-fixture
+pkgname=(split-fixture split-fixture-plugin split-fixture-all)
+pkgver=1.0
+pkgrel=1
+pkgdesc='Split fixture core'
+arch=(x86_64)
+url=https://example.invalid/split
+license=(MIT)
+package_split-fixture() { :; }
+package_split-fixture-plugin() { pkgdesc='Split fixture plugin'; }
+package_split-fixture-all() { pkgdesc='Split fixture metapackage'; arch=(any); }
+PKGBUILD
+(cd packages/arch/split-fixture && makepkg --printsrcinfo > .SRCINFO)
+cat >> packages/arch/manifest.toml <<'MANIFEST'
+
+[split-fixture]
+binary_repo = true
+aur_maintainer = false
+architecture = "x86_64"
+install = "missing-package"
+MANIFEST
+expect_failure uv run --locked scripts/catalog.py
+grep -q 'install must name one of its packages' "$tmp/failure.log"
+sed -i 's/^install = "missing-package"/install = "split-fixture-all"/' packages/arch/manifest.toml
+python3 scripts/catalog.py --record-release split-fixture 1.0-1 --published-at 2026-01-05T00:00:00Z
+uv run --locked scripts/catalog.py
+uv run --locked scripts/catalog.py --check
+card=$(sed -n '/<article class="package" id="package-split-fixture">/,/<\/article>/p' site/dist/packages.html)
+grep -Fq 'sudo pacman -S split-fixture-all' <<< "$card"
+grep -Fq 'All 3 packages built from split-fixture' <<< "$card"
+grep -Fq 'Split fixture plugin' <<< "$card"
+grep -Fq 'arch/x86_64/split-fixture-plugin-1.0-1-x86_64.pkg.tar.zst' <<< "$card"
+grep -Fq 'arch/x86_64/split-fixture-all-1.0-1-any.pkg.tar.zst' <<< "$card"
+grep -q 'id="package-split-fixture-plugin"' <<< "$card"
+[[ $(grep -c 'id="package-split-fixture"' site/dist/packages.html) == 1 ]]
+[[ $(grep -c '<article class="package" id="package-split-fixture' site/dist/packages.html) == 1 ]]
+grep -Fq '| [split-fixture](packages/arch/split-fixture) | Signed binary repository (3 split packages) | `sudo pacman -S split-fixture-all` |' README.md
+grep -Fq 'href="./packages.html#package-split-fixture"' site/dist/index.html
+printf 'PASS: split packages render as one card with every package and a chosen install target\n'
