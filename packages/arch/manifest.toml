@@ -11,6 +11,15 @@ architecture = "x86_64"
 debug_package = false
 description = "A terminal music player inspired by Winamp."
 
+[elephant]
+binary_repo = true
+aur_maintainer = false
+architecture = "x86_64"
+debug_package = false
+source_archive = true
+install = "elephant-all"
+description = "The data provider behind the Walker launcher, built from source with one package per provider. elephant-all installs the general-purpose set."
+
 [herdr]
 published_version = "0.9.5+codefriendly1-2"
 published_at = 2026-10-30T23:13:53+00:00
