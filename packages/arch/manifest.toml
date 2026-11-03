@@ -41,8 +41,8 @@ debug_package = false
 description = "A source-built terminal runtime for coding agents, including the hc command."
 
 [herdr-desktop]
-published_version = "0.1.12-1"
-published_at = 2026-11-02T17:30:50+00:00
+published_version = "0.1.12+codefriendly1-1"
+published_at = 2026-11-03T02:01:08+00:00
 binary_repo = true
 aur_maintainer = false
 architecture = "x86_64"
