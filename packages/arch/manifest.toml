@@ -47,7 +47,7 @@ binary_repo = true
 aur_maintainer = false
 architecture = "x86_64"
 debug_package = false
-description = "A source-built desktop workspace for terminals and coding agents, using herdr-core."
+description = "CodeFriendly's source-built Herdr desktop app with pane-hover focus, using herdr-core."
 
 [monstar]
 binary_repo = true

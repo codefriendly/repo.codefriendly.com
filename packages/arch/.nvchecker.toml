@@ -53,10 +53,14 @@ url = "https://releases.herdr.dev/core/latest.json"
 regex = '"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"'
 
 [herdr-desktop]
+# CodeFriendly fork releases. A new upstream herdrdev/herdr-app v* tag means
+# the pane-hover patch must be ported and tagged codefriendly-vX.Y.Z-r1 first.
 source = "git"
-git = "https://github.com/herdrdev/herdr-app"
-include_regex = 'v\d+\.\d+\.\d+'
-prefix = "v"
+git = "https://github.com/codefriendly/herdr-app.git"
+include_regex = 'codefriendly-v\d+\.\d+\.\d+-r\d+'
+prefix = "codefriendly-v"
+from_pattern = '(\d+\.\d+\.\d+)-r(\d+)'
+to_pattern = '\1+codefriendly\2'
 
 [libsoup]
 # Keep the libsoup 2.x ABI; do not select libsoup 3 releases.

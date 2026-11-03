@@ -1,13 +1,26 @@
 # Herdr desktop: Arch Linux source build
 
-This package builds herdr-app v0.1.11 from revision
-e12fd31866f33cb613922d0b33ea506e6f23ce3c. Ghostty VT is pinned to
+This package builds CodeFriendly's herdr-app fork, release
+`codefriendly-v0.1.12-r1`, from commit
+90e0b9c34fbad2ebba36bf42a83c0ea7b25dc723. That is upstream herdr-app v0.1.12
+(4aa3460749947e7771aa39a8a2cec58d46649926) plus one commit: pane-hover focus.
+The package version is `0.1.12+codefriendly1`; the executable reports
+`herdr-app 0.1.12`. Ghostty VT is pinned to
 291fd050b9e9c293c8adb6a140742649b7e42d3a. Cargo.lock pins the Rust graph.
 Zig 0.16.0 builds the static VT library. The executable uses system glibc.
 
 The recipe and desktop entry are adapted from Qingxu's herdr-app-bin AUR
 package (Qingxu <me@linioi.com>). This is a source package, not that binary
 package. Only x86_64 is tested and supported by this recipe.
+
+## Pane-hover focus
+
+The fork adds the `focus_pane_on_hover` setting (off by default) and a switch
+for it in Settings → Look → Panes. When on, the pane under a moving pointer
+takes focus and the keyboard. It waits while a mouse button is held, while a
+dialog or popup is open, and while a mod or its input has the keyboard. The
+change is documented in the installed agent guide (defaults/AGENTS.md) and
+covered by the fork's tests, which this recipe runs.
 
 ## Runtime and updates
 

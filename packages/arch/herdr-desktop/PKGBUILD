@@ -1,13 +1,15 @@
 # Adapted from herdr-app-bin, maintained by Qingxu <me@linioi.com>.
+# Builds CodeFriendly's herdr-app fork: upstream release plus pane-hover focus.
 pkgname=herdr-desktop
-pkgver=0.1.12
+pkgver=0.1.12+codefriendly1
 pkgrel=1
-_commit=4aa3460749947e7771aa39a8a2cec58d46649926
+_upstreamver=0.1.12
+_commit=90e0b9c34fbad2ebba36bf42a83c0ea7b25dc723
 _ghosttycommit=291fd050b9e9c293c8adb6a140742649b7e42d3a
 _zigver=0.16.0
-pkgdesc='Native desktop workspace for terminals and coding agents that keep running'
+pkgdesc='Native desktop workspace for terminals and coding agents that keep running (CodeFriendly pane-hover build)'
 arch=('x86_64')
-url='https://github.com/herdrdev/herdr-app'
+url='https://github.com/codefriendly/herdr-app'
 license=('Apache-2.0' 'MIT' 'BSD-2-Clause' 'BSD-3-Clause' 'ISC' 'Zlib'
          'Unicode-3.0' 'MPL-2.0' 'OFL-1.1' 'CC-BY-SA-3.0' 'CC-BY-SA-4.0'
          'CC0-1.0' 'Apache-2.0 WITH LLVM-exception' 'bzip2-1.0.6' 'CDLA-Permissive-2.0')
@@ -19,7 +21,7 @@ checkdepends=('python' 'bun' 'vulkan-swrast' 'desktop-file-utils')
 optdepends=('vulkan-driver: GPU rendering (required in a desktop session)'
             'git: repository status and Git actions'
             'xdg-utils: open links with the default application')
-provides=("herdr-app=$pkgver")
+provides=("herdr-app=$_upstreamver")
 conflicts=('herdr-app' 'herdr-app-bin' 'herdr-app-desktop-bin')
 options=('!debug' '!lto')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz"
@@ -28,12 +30,12 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/$_commit.tar.gz"
         'https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate'
         'herdr-app.desktop' 'PACKAGING.md' 'pacman-updates.patch')
 noextract=('option-ext-0.2.0.crate')
-sha256sums=('e2ed6fb44b9ea93e6bfc2c6156cc41af52c1a3f2320af7b5e11017183db0a3a0'
+sha256sums=('53b9c9692a0ea8ea9964151074f6999ec6a4daf6dd75442a529e36835e5c73ff'
             'f35b464f1aee22ffda9f6359038b9ad18a784342b4a4fa1cb97a79fb9ade79a4'
             '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
             '04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d'
             '2cc1199525a1bac6364a7397363f96a00db3faaf51aea049f9d4a7f694ef885a'
-            '9979f138c591087942aa92b48930384f0e237ac0656967494144eb8b83df8c5d'
+            '0e4daa280f52edab1e5dbd22d5bd1b28eb67f6c83a7fa06f6e4eb411bb4d773e'
             'c5cd59a51407ab12925dd94cb66f35f886682a616368c59e71c55fab5b056d01')
 
 prepare() {
@@ -87,7 +89,9 @@ check() {
   bun test scripts/files.test.ts scripts/picker.test.ts
   python -m unittest discover -s scripts -p test_distribution.py
   desktop-file-validate "$srcdir/herdr-app.desktop"
-  [[ $("$srcdir/target/release/herdr-app" --version) == "herdr-app $pkgver" ]]
+  [[ $("$srcdir/target/release/herdr-app" --version) == "herdr-app $_upstreamver" ]]
+  grep -q focus_pane_on_hover defaults/AGENTS.md
+  grep -q focus_pane_on_hover defaults/frame/settings/main.js
   grep -q 'VileR' THIRD-PARTY-NOTICES
 }
 
