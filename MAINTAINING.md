@@ -225,7 +225,10 @@ The command prints the output path. By default it creates a directory under
 `/tmp`; `--output` selects an empty directory instead. Outputs include packages,
 generated `.SRCINFO`, and image/build logs. Each package also has a `.PKGINFO`
 report, a `.files` inventory, a `.namcap.log` report, and a `.sha256` checksum.
-Namcap findings are advisory; read its report before publication. A checked-in
+Namcap findings are advisory; read its report before publication. If namcap
+itself fails, for example with a Python traceback, the build still writes every
+package's reports and checksums, then names each failed report and returns a
+nonzero status. A checked-in
 `.SRCINFO` must match the recipe or the build stops before compiling.
 Failed builds retain available logs and return a nonzero status.
 The container is removed after the build. Debug

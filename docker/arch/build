@@ -41,6 +41,9 @@ exec sudo -u builder env PKGDEST=/output LOGDEST=/output bash -c '
   makepkg --cleanbuild --clean --syncdeps --noconfirm --log
   # A recipe can override makepkg.conf. Do not export debug packages.
   shopt -s nullglob
+  # Namcap findings are advisory and do not change its exit status; a nonzero
+  # status means the check itself failed. Finish every report, then fail.
+  namcap_failed=()
   for package in /output/*.pkg.tar.*; do
     name=$(LC_ALL=C pacman -Qp "$package" | cut -d " " -f 1)
     if [[ $name == *-debug ]]; then
@@ -49,7 +52,13 @@ exec sudo -u builder env PKGDEST=/output LOGDEST=/output bash -c '
     fi
     bsdtar -xOf "$package" .PKGINFO > "$package.PKGINFO"
     bsdtar -tf "$package" > "$package.files"
-    namcap "$package" > "$package.namcap.log" 2>&1
+    if ! namcap "$package" > "$package.namcap.log" 2>&1; then
+      namcap_failed+=("${package##*/}")
+    fi
     (cd /output && sha256sum "${package##*/}") > "$package.sha256"
   done
+  if (( ${#namcap_failed[@]} )); then
+    printf "namcap failed for %s; see its .namcap.log.\n" "${namcap_failed[@]}" >&2
+    exit 1
+  fi
 '
