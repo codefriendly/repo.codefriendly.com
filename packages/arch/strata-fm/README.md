@@ -35,16 +35,16 @@ Publish that archive and the matching Poppler source/build files with the binary
 Do not treat the generated Rust report alone as complete source delivery.
 
 Published source for this release is available at
-<https://repo.codefriendly.com/arch/sources/strata-fm-1.1.1-2.src.tar.zst>.
+<https://repo.codefriendly.com/arch/sources/strata-fm-1.2.1-1.src.tar.zst>.
 The matching Poppler source and Arch build files are linked from
-<https://repo.codefriendly.com/arch/sources/strata-fm-1.1.1-2-native-sources.txt>.
+<https://repo.codefriendly.com/arch/sources/strata-fm-1.2.1-1-native-sources.txt>.
 
 To rebuild from the source archive on Arch Linux, extract it into an empty
 directory. Run these commands there. Dependency installation needs sudo.
 
 ```bash
 mkdir src
-cp -a strata-1.1.1 src/
+cp -a strata-1.2.1 src/
 cp README.md GPL-3.0.txt src/
 makepkg --noextract --clean --syncdeps --noconfirm
 ```
