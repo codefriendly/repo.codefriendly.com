@@ -26,6 +26,11 @@ radix_notices = {
     ("@radix-ui/react-use-size", "1.1.1"),
     ("@radix-ui/rect", "1.1.1"),
 }
+# These MIT packages omit their notice from the npm tarball. Preserve the
+# original notice from the checksummed upstream repository source.
+supplements = {entry: "radix-LICENSE" for entry in radix_notices}
+supplements[("react-remove-scroll-bar", "2.3.8")] = "react-remove-scroll-bar-LICENSE"
+supplements[("@wailsio/runtime", "3.0.0-beta.26")] = "wails-LICENSE"
 lock = json.loads((frontend / "package-lock.json").read_text())
 rows = ["# Frontend dependency notices", "", "Runtime dependencies from the npm lockfile.", ""]
 for relative, record in sorted(lock["packages"].items()):
@@ -54,13 +59,8 @@ for relative, record in sorted(lock["packages"].items()):
             shutil.copyfile(path, target)
             notices.append(str(local))
     if not notices:
-        # These MIT packages omit their notice from the npm tarball. Preserve
-        # the original notice from the checksummed upstream repository source.
-        if (name, record["version"]) in radix_notices and license_name == "MIT":
-            supplement = "radix-LICENSE"
-        elif (name, record["version"]) == ("react-remove-scroll-bar", "2.3.8") and license_name == "MIT":
-            supplement = "react-remove-scroll-bar-LICENSE"
-        else:
+        supplement = supplements.get((name, record["version"]))
+        if supplement is None or license_name != "MIT":
             raise SystemExit(f"No license notice found for {name}")
         destination.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(Path(__file__).parent / supplement, destination / "LICENSE")

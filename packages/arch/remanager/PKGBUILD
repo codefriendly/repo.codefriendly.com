@@ -1,44 +1,54 @@
 # Packaging based on remanager-bin by Kitty Dae Elliott <kdelliott@pm.me>.
 pkgname=remanager
-pkgver=1.7.4
+pkgver=2.0.0
 pkgrel=1
 pkgdesc='Open-source mod manager for reMarkable tablets'
 arch=('x86_64')
 url='https://remanager.io/'
 license=('GPL-3.0-only' 'LGPL-3.0-only' 'MIT' 'BSD-2-Clause' 'BSD-3-Clause' 'Apache-2.0' 'ISC' '0BSD')
-depends=('gtk3' 'webkit2gtk-4.1' 'glibc' 'glib2' 'gdk-pixbuf2' 'libsoup3' 'hicolor-icon-theme')
-makedepends=('go' 'npm' 'nodejs' 'python' 'pkgconf')
+# Wails v3 links GTK4 and WebKitGTK 6.0; the CGO bridge also needs libX11 headers.
+depends=('gtk4' 'webkitgtk-6.0' 'glibc' 'glib2' 'gdk-pixbuf2' 'hicolor-icon-theme')
+makedepends=('go>=1.26.3' 'npm' 'nodejs' 'python' 'pkgconf' 'libx11')
 checkdepends=('desktop-file-utils')
 optdepends=('gnome-keyring: store tablet passwords in the login keyring'
-            'xdg-desktop-portal: native file dialogs')
+            'xdg-desktop-portal: Flatpak file dialogs and the system colour scheme')
 conflicts=('remanager-bin')
 options=('!debug' '!lto')
 source=("reManager-$pkgver.tar.gz::https://github.com/rmitchellscott/reManager/archive/refs/tags/v$pkgver.tar.gz"
         'reManager.desktop' 'frontend-licenses.py' 'README.md'
+        'wails-LICENSE::https://raw.githubusercontent.com/wailsapp/wails/v3.0.0-beta.26/LICENSE'
         'radix-LICENSE::https://raw.githubusercontent.com/radix-ui/primitives/fcef0668a5c827e5a4baac405474d75680f9a4eb/LICENSE'
         'react-remove-scroll-bar-LICENSE::https://raw.githubusercontent.com/theKashey/react-remove-scroll-bar/7301c160fda44cb8cf2b9fdfde61efad35736196/LICENSE')
-sha256sums=('3100c829de2dc1e26bf765f09a2eca796c02db93869ae945d065c344ab7400f1'
-            'af71e3ee3c5c2f59f045a96ac4a8d4b609a2a66ed02ee05458a07536d022c94d'
-            '5df1a74374d610beafc16bb34b220a4a5ad50c4fb0d2243b74085a9730a5adef'
-            '24b69efa0cc684a8f9244a09d237f4183dfc346c89c11a9a140b10b1e6cce9e3'
+sha256sums=('aa680cb66fd979a532f92e7d1fb6d1ad0e03de688683994111f7b513e3b7d63b'
+            '8e1c7178a5b540bd805999df8603ed068d7972bbf93931acd726b68260d1cf97'
+            'c5ccbb06974d5aaaa3ba8ce9151fdb8ca713f8c2d2950d1f5a9db1e0b5d1184a'
+            'fee5facbb9524ed2e78af4d778342c83bf215cf6ae33c99e37a8c12f1aaad7ad'
+            'cede95c28e6e9d67d1c1e49e8ba3c20250c7d4080c3faca1579b6732327ae40d'
             '0e80a2d229d2fd4fc7e8636142ec5d0ff0bc031f14c15b682e2ac01dfd5b5138'
             'a79aae0c0f21990d9d963bb3c5a79cdcea9a46f8523ba55c58d7fe776b6ebc84')
 
 prepare() {
   cd "reManager-$pkgver"
   export GOPATH="$srcdir/go" GOTOOLCHAIN=local GOMAXPROCS=2
+  # go.mod replaces the Wails module with third_party/wails-v3, which the
+  # release archive does not ship. Materialize it from the module cache and
+  # apply upstream's patches before anything resolves imports.
+  bash scripts/prepare-wails-fork.sh
   go mod download
   go mod verify
   npm --prefix frontend ci --ignore-scripts --no-audit --no-fund
-  # prepare() installed the locked dependencies; do not resolve them again.
-  sed -i 's/"frontend:install": "npm install"/"frontend:install": ""/' wails.json
   python "$srcdir/frontend-licenses.py" frontend dependency-licenses
   GOBIN="$GOPATH/bin" GOFLAGS= go install github.com/google/go-licenses/v2@v2.0.1
   # Go's embed directive needs a file before Wails builds the actual frontend.
   mkdir -p frontend/dist
   touch frontend/dist/.placeholder
-  export GOFLAGS='-mod=readonly -p=2 -tags=webkit2_41,production'
+  export GOFLAGS='-mod=readonly -p=2 -tags=production'
+  local wailsversion
+  wailsversion=$(awk '/github.com\/wailsapp\/wails\/v3 v/ {print $2; exit}' go.mod)
   "$GOPATH/bin/go-licenses" report . --ignore reManager > dependency-licenses/GO-LICENSES.csv
+  # go-licenses cannot resolve license URLs for a filesystem replacement.
+  sed -i "s|^github.com/wailsapp/wails/v3,Unknown,|github.com/wailsapp/wails/v3,https://github.com/wailsapp/wails/blob/$wailsversion/LICENSE,|" \
+    dependency-licenses/GO-LICENSES.csv
   "$GOPATH/bin/go-licenses" check . --ignore reManager \
     --allowed_licenses=LGPL-3.0,MIT,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC
   go list -deps -f '{{with .Module}}{{.Path}}{{"\t"}}{{.Dir}}{{end}}' . \
@@ -52,8 +62,14 @@ prepare() {
       -o -iname 'COPYING*' -o -iname 'NOTICE*' -o -iname 'PATENTS*' \
       -o -iname 'COPYRIGHT*' \) -print0)
   done < dependency-modules.tsv
-  cp /usr/share/licenses/go/LICENSE dependency-licenses/Go-LICENSE
+  local go_license=/usr/share/licenses/go/LICENSE
+  [[ -f $go_license ]] || go_license="$(go env GOROOT)/LICENSE"
+  cp "$go_license" dependency-licenses/Go-LICENSE
   go mod vendor
+  # The wails3 CLI is built in build(); cache its own dependency graph now so
+  # that build() never resolves modules over the network.
+  (cd third_party/wails-v3 && GOFLAGS= go mod download)
+  # Snapshot only after both the application and CLI graphs are available.
   cp -a "$GOPATH/pkg/mod/cache/download" module-source
   chmod -R u+w "$GOPATH/pkg/mod" module-source
 }
@@ -63,32 +79,49 @@ build() {
   export GOPATH="$srcdir/go" GOTOOLCHAIN=local GOMAXPROCS=2
   export GOPROXY=off GOSUMDB=off GOFLAGS='-mod=vendor -p=2 -buildmode=pie'
   export CGO_LDFLAGS="$LDFLAGS"
-  go build -o "$srcdir/wails" github.com/wailsapp/wails/v2/cmd/wails
-  "$srcdir/wails" build -m -nosyncgomod -trimpath -tags webkit2_41 -ldflags "-X main.version=v$pkgver"
+  # A prepared source archive does not contain GOPATH. Restore its delivered
+  # module mirror so the Wails CLI can also build with network access disabled.
+  if [[ -d module-source ]]; then
+    mkdir -p "$GOPATH/pkg/mod/cache/download"
+    cp -a module-source/. "$GOPATH/pkg/mod/cache/download/"
+  fi
+  # Build the CLI from the patched fork and regenerate the frontend bindings,
+  # as upstream's `wails3 build` does, so the TypeScript bindings cannot drift
+  # from the Go services.
+  (cd third_party/wails-v3 && GOFLAGS='-p=2' go build -o "$srcdir/wails3" ./cmd/wails3)
+  GOFLAGS='-mod=vendor -p=2' "$srcdir/wails3" generate bindings -clean=true -ts -i \
+    -f '-tags production -trimpath -buildvcs=false'
+  npm --prefix frontend run build
+  # Wails v3 builds with plain `go build`; main.version is the only version stamp.
+  go build -tags production -trimpath -buildvcs=false \
+    -ldflags "-w -s -X main.version=v$pkgver" -o bin/reManager .
 }
 
 check() {
   cd "reManager-$pkgver"
   export GOPATH="$srcdir/go" GOTOOLCHAIN=local GOMAXPROCS=2
   export GOPROXY=off GOSUMDB=off GOFLAGS='-mod=vendor -p=2'
-  go test -tags 'webkit2_41 production' ./...
+  go test -tags production ./...
   desktop-file-validate "$startdir/reManager.desktop"
 }
 
 package() {
   cd "reManager-$pkgver"
-  install -Dm755 build/bin/reManager "$pkgdir/usr/bin/reManager"
+  install -Dm755 bin/reManager "$pkgdir/usr/bin/reManager"
   install -Dm644 assets/icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/reManager.svg"
-  install -Dm644 "$startdir/reManager.desktop" "$pkgdir/usr/share/applications/reManager.desktop"
+  # GTK uses Linux.ApplicationID (io.scottlabs.reManager) as the Wayland app id,
+  # so the desktop file carries that id and the window class it reports.
+  install -Dm644 "$startdir/reManager.desktop" \
+    "$pkgdir/usr/share/applications/io.scottlabs.reManager.desktop"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   cp -a dependency-licenses "$pkgdir/usr/share/licenses/$pkgname/"
   install -Dm644 "$startdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
   local archive="$pkgname-$pkgver-$pkgrel.src.tar.zst"
   tar --zstd -cf "${PKGDEST:-$startdir}/$archive" \
-    --exclude="reManager-$pkgver/build/bin" \
+    --exclude="reManager-$pkgver/bin" \
     -C "$srcdir" "reManager-$pkgver" \
     -C "$startdir" PKGBUILD .SRCINFO README.md reManager.desktop frontend-licenses.py \
-    radix-LICENSE react-remove-scroll-bar-LICENSE \
+    wails-LICENSE radix-LICENSE react-remove-scroll-bar-LICENSE \
     "reManager-$pkgver.tar.gz"
   (cd "${PKGDEST:-$startdir}" && sha256sum "$archive") \
     > "${PKGDEST:-$startdir}/$archive.sha256"
