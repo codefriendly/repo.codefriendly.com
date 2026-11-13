@@ -53,7 +53,7 @@ directory and run:
 
 ```bash
 mkdir src
-cp -a cli-0.19.1 src/
+cp -a cli-0.21.0 src/
 makepkg --noextract --clean --syncdeps --noconfirm
 ```
 

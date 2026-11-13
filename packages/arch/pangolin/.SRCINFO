@@ -28,7 +28,7 @@ pkgbase = pangolin
 	source = Unicode-LICENSE.txt::https://www.unicode.org/license.txt
 	sha256sums = c1c0740a3ae9bcbc355f44d6cd743c9cb8e555a9be30b50be2be666c39768325
 	sha256sums = d6ef0ecc211cece73eb81bf2ffc96cae35cad7b2439590afb00f04dab8358c12
-	sha256sums = 33d79374fa0e9b93e389eb9e77a8c88e6517014be7b93ef77a1c49552759da95
+	sha256sums = 91ce50264ba924b7493e444c225d9cefd673d34510011966e45c2deaa23bccfe
 	sha256sums = e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96
 
 pkgname = pangolin
