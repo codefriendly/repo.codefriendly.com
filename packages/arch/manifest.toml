@@ -5,8 +5,9 @@
 [cliamp]
 binary_repo = true
 aur_maintainer = false
-published_version = "2.3.0-2"
-published_at = 2026-10-30T00:00:00Z
+source_archive = true
+published_version = "2.4.1-1"
+published_at = 2026-11-13T23:36:30+00:00
 architecture = "x86_64"
 debug_package = false
 description = "A terminal music player inspired by Winamp."
