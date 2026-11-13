@@ -1,8 +1,8 @@
 # Based on AUR strata-fm-git by tassiovirginio <tassiovirginio@gmail.com>.
 # AUR commit: 14f20b90de99f7680c8dfe258e824d236d0d89e4.
 pkgname=strata-fm
-pkgver=1.1.1
-pkgrel=2
+pkgver=1.2.1
+pkgrel=1
 pkgdesc='A fast, keyboard-first file manager for Linux (without RAR support)'
 arch=('x86_64' 'aarch64')
 url='https://stratafiles.io/'
@@ -47,7 +47,7 @@ source=(
   'siphasher-COPYING::https://raw.githubusercontent.com/jedisct1/rust-siphash/451f67d73a772cba325728109bbfa247750ed076/COPYING'
 )
 sha256sums=(
-  '1a65e931a53cc83182d7b7138b8fd5f5697387f31e5f104f6671e245107a9665'
+  '007dfa3e8185206a2da45b509626ec9205fce9629c93c243485a383c54c36b19'
   'd870099655a74f4f7b1c7f5a05ad2c87a8157e0a8318bcc30fdd8d50bde167fe'
   'd0fa9af3f42427a28eb3abc132d33866fa6ef30a40b28e9a6706f6f80406f0c8'
   '16be353621235df9aaa78eb38c8aaafaa8956a25c38d8b779dcf3891154be3c6'
