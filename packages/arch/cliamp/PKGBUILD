@@ -5,20 +5,90 @@ pkgrel=1
 pkgdesc='A retro terminal music player inspired by Winamp 2.x'
 arch=('x86_64' 'aarch64')
 url='https://github.com/bjarneo/cliamp'
-license=('MIT')
+license=('GPL-3.0-or-later' 'MIT' 'MIT-0' 'BSD-2-Clause' 'BSD-3-Clause' 'Apache-2.0' 'ISC' 'Unlicense' 'LicenseRef-MIT-Lucent' 'Unicode-3.0')
 depends=('alsa-lib' 'flac' 'libvorbis' 'libogg' 'mpg123' 'ffmpeg' 'yt-dlp' 'glibc' 'hicolor-icon-theme')
 optdepends=('pipewire-alsa: audio output on PipeWire systems'
   'pulseaudio-alsa: audio output on PulseAudio systems')
-makedepends=('go')
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/bjarneo/cliamp/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('fb5e43513b71287cd1db39403a293436b38db2ffa73fcd820a34ba3a73d2523e')
+makedepends=('go' 'git')
+options=('!debug' '!lto')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/bjarneo/cliamp/archive/refs/tags/v${pkgver}.tar.gz"
+        'Unicode-LICENSE.txt::https://www.unicode.org/license.txt'
+        'asm-LICENSE::https://raw.githubusercontent.com/segmentio/asm/v1.2.1/LICENSE'
+        'vorbis-go-7a1a428.tar.gz::https://github.com/xlab/vorbis-go/archive/7a1a42804d4d9f8eb7466be0b953c18069c6c271.tar.gz'
+        'licensed-vorbis.patch'
+        'README.md')
+sha256sums=('fb5e43513b71287cd1db39403a293436b38db2ffa73fcd820a34ba3a73d2523e'
+            'e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96'
+            'cca993712df289a5958bdef69031a5dac0f951ac15afeb313f9eeea55ed59443'
+            '3ed69aeb154dbbb8da306ea7afb05821fcae93570b2a5d7cddef2fc96cbf5d86'
+            '50abbebe9d7c9cbb955e68408de772bae3b89ae9777428b207237f6b4cc00366'
+            '1447535428e695b9d69affb33f3700e2c8f8bd0966b12c3c3eb2ac10b89b72b9')
+
+prepare() {
+    cd "${pkgname}-${pkgver}"
+    patch -Np1 --fuzz=0 -i "$srcdir/licensed-vorbis.patch"
+    export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=1 GOMAXPROCS=2
+    go mod download
+    go mod verify
+    local asm_directory vorbis_directory
+    asm_directory=$(go list -m -f '{{.Dir}}' github.com/segmentio/asm)
+    # The MIT-0 grant exists at the exact tag but is omitted from its Go archive.
+    [[ $(go list -m -f '{{.Version}} {{.Sum}}' github.com/segmentio/asm) == \
+        'v1.2.1 h1:DTNbBqs57ioxAD4PrArqftgypG4/qNpXoJx8TVXxPR0=' ]]
+    chmod u+w "$asm_directory"
+    install -m644 "$srcdir/asm-LICENSE" "$asm_directory/LICENSE"
+    vorbis_directory=$(go list -m -f '{{.Dir}}' github.com/xlab/vorbis-go)
+    # Bind the module's grant to the separately checksummed exact upstream source.
+    cmp "$vorbis_directory/LICENSE" \
+        "$srcdir/vorbis-go-7a1a42804d4d9f8eb7466be0b953c18069c6c271/LICENSE"
+    GOBIN="$GOPATH/bin" GOFLAGS= go install github.com/google/go-licenses/v2@v2.0.1
+    export GOFLAGS='-mod=readonly -p=2'
+    # v2.0.1 cannot classify MIT-0. Only this exact checksummed module/notice
+    # receives a manual MIT-0 classification; all other unknowns remain fatal.
+    "$GOPATH/bin/go-licenses" report . --ignore github.com/segmentio/asm > dependency-licenses.csv
+    printf '%s\n' 'github.com/segmentio/asm,https://github.com/segmentio/asm/blob/v1.2.1/LICENSE,MIT-0' \
+        >> dependency-licenses.csv
+    "$GOPATH/bin/go-licenses" check . --ignore github.com/segmentio/asm \
+        --allowed_licenses=GPL-3.0,MIT,MIT-0,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC,Unlicense,LicenseRef-MIT-Lucent
+    go list -deps -f '{{with .Module}}{{.Path}}{{"\t"}}{{.Dir}}{{end}}' . \
+        | sort -u > dependency-modules.tsv
+    local module directory file
+    while IFS=$'\t' read -r module directory; do
+        [[ -n $module && $module != github.com/bjarneo/cliamp ]] || continue
+        while IFS= read -r -d '' file; do
+            install -Dm644 "$file" "dependency-licenses/$module/${file#"$directory/"}"
+        done < <(find "$directory" -type f \( -iname 'LICENSE*' -o -iname 'LICENCE*' \
+            -o -iname 'COPYING*' -o -iname 'NOTICE*' -o -iname 'PATENTS*' \
+            -o -iname 'COPYRIGHT*' \) -print0)
+    done < dependency-modules.tsv
+    cp "$srcdir/Unicode-LICENSE.txt" dependency-licenses/Unicode-LICENSE.txt
+    cp /usr/share/licenses/go/LICENSE dependency-licenses/Go-LICENSE
+    # Preserve applicable notices from bundled C headers, not just named files.
+    cp -a "$vorbis_directory/vorbis/ogg" dependency-licenses/github.com/xlab/vorbis-go/
+    cp -a "$vorbis_directory/vorbis/vorbis" dependency-licenses/github.com/xlab/vorbis-go/
+    cp dependency-licenses.csv dependency-licenses/
+    go list -deps -f '{{with .Module}}{{.Path}}{{"\t"}}{{.Version}}{{end}}' . \
+        | sort -u > dependency-licenses/dependency-versions.tsv
+    chmod -R u+w dependency-licenses
+    go mod vendor
+    chmod -R u+w "$GOPATH/pkg/mod"
+}
 
 build() {
     cd "${pkgname}-${pkgver}"
-    export CGO_ENABLED=1
-    go build -trimpath -buildmode=pie \
+    export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=1 GOMAXPROCS=2
+    export GOPROXY=off GOSUMDB=off
+    go build -mod=vendor -p=2 -trimpath -buildmode=pie \
         -ldflags="-X main.version=v${pkgver} -linkmode=external -extldflags '${LDFLAGS}'" \
         -o cliamp .
+}
+
+check() {
+    cd "${pkgname}-${pkgver}"
+    export GOPATH="$srcdir/go" GOTOOLCHAIN=local CGO_ENABLED=1 GOMAXPROCS=2
+    export GOPROXY=off GOSUMDB=off
+    go test -mod=vendor -p=2 ./...
+    ./cliamp --version | grep -F "v${pkgver}"
 }
 
 package() {
@@ -28,4 +98,14 @@ package() {
     install -Dm644 Cliamp.png "${pkgdir}/usr/share/icons/hicolor/512x512/apps/cliamp.png"
     install -Dm644 Cliamp.png "${pkgdir}/usr/share/pixmaps/cliamp.png"
     install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    cp -a dependency-licenses "${pkgdir}/usr/share/licenses/${pkgname}/"
+    install -Dm644 "$startdir/README.md" "$pkgdir/usr/share/doc/$pkgname/PACKAGING.md"
+    local archive="$pkgname-$pkgver-$pkgrel.src.tar.zst"
+    tar --zstd -cf "${PKGDEST:-$startdir}/$archive" \
+        --exclude="$pkgname-$pkgver/cliamp" \
+        -C "$srcdir" "$pkgname-$pkgver" \
+        -C "$startdir" PKGBUILD .SRCINFO README.md licensed-vorbis.patch \
+        "$pkgname-$pkgver.tar.gz" Unicode-LICENSE.txt asm-LICENSE vorbis-go-7a1a428.tar.gz
+    (cd "${PKGDEST:-$startdir}" && sha256sum "$archive") \
+        > "${PKGDEST:-$startdir}/$archive.sha256"
 }

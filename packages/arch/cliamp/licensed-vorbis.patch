@@ -1,0 +1,25 @@
+From: CodeFriendly packaging
+Date: 2026-11-13
+Subject: Pin the license-only Vorbis revision; leave implementation unchanged
+
+Upstream 7a1a428 has parent b5b85f1 and adds only LICENSE.
+Keep its independently verified module hashes in the locked application graph.
+
+--- a/go.mod
++++ b/go.mod
+@@ -85,7 +85,7 @@
+ 	github.com/sirupsen/logrus v1.10.2 // indirect
+ 	github.com/stretchr/objx v0.5.3 // indirect
+ 	github.com/stretchr/testify v1.12.1 // indirect
+-	github.com/xlab/vorbis-go v0.0.0-20210911202351-b5b85f1ec645 // indirect
++	github.com/xlab/vorbis-go v0.0.0-20261030222311-7a1a42804d4d // indirect
+ 	github.com/xo/terminfo v1.0.0 // indirect
+ 	github.com/yuin/goldmark v1.8.5 // indirect
+ 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+--- a/go.sum
++++ b/go.sum
+@@ -173,2 +173,2 @@
+-github.com/xlab/vorbis-go v0.0.0-20210911202351-b5b85f1ec645 h1:lYg/+vV/Fd5WM1+Ptg54Am3y4mDXaMSrT+mKUHV5uVc=
+-github.com/xlab/vorbis-go v0.0.0-20210911202351-b5b85f1ec645/go.mod h1:AMqfx3jFwPqem3u8mF2lsRodZs30jG/Mag5HZ3mB3sA=
++github.com/xlab/vorbis-go v0.0.0-20261030222311-7a1a42804d4d h1:D+Q2z4e7a/r7l055O5AMQ/+unIDz/NgKJT/ZWEx3oIk=
++github.com/xlab/vorbis-go v0.0.0-20261030222311-7a1a42804d4d/go.mod h1:AMqfx3jFwPqem3u8mF2lsRodZs30jG/Mag5HZ3mB3sA=
