@@ -1,11 +1,11 @@
 # Maintainer: Tim Culverhouse <tim@timculverhouse.com>
 # Based on AUR monstar commit 9b4505632201491a73a5b819ee013a2d7616e9a1.
 pkgname=monstar
-pkgver=1.0.1
-pkgrel=2
-_zigver=0.16.0
-_z2dcommit=47fc1030c1636dcfb75ea1cc238f706dd1feb379
-_uucodecommit=2826a37a4562284fdacd8fa029d49509cc9bffcd
+pkgver=1.2.0
+pkgrel=1
+_zigver=0.17.1
+_z2dcommit=8787d71bac42d9aab00428ccb37a4fd453418761
+_uucodecommit=1fb73433bba5d93366c57f23ff2e9d7939746500
 pkgdesc='Linux-native Wayland terminal built on Ghostty terminal core'
 arch=('x86_64')
 url='https://github.com/rockorager/monstar'
@@ -18,18 +18,21 @@ depends=(
   'freetype2'
   'glibc'
   'harfbuzz'
+  'hicolor-icon-theme'
   'libxkbcommon'
   'wayland'
 )
 makedepends=(
   'ncurses'
+  'vulkan-headers'
   'wayland-protocols>=1.49'
 )
-checkdepends=('noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji')
+checkdepends=('libx11' 'noto-fonts-cjk' 'noto-fonts-emoji' 'ttf-dejavu')
 optdepends=(
   'noto-fonts-emoji: emoji support'
   'noto-fonts-cjk: CJK font support'
   'systemd: launch additional terminal windows'
+  'vulkan-icd-loader: GPU rendering with renderer = vulkan'
   'xdg-desktop-portal: open links and files through a desktop portal'
   'xdg-utils: open links when a desktop portal is unavailable'
 )
@@ -48,9 +51,9 @@ source=(
   'LICENSES.md'
 )
 sha256sums=(
-  'a82209aaef3534407f29d860e3174974f19b4a7c10286212fdeacdcd1cb9049d'
+  'efb637effee79272c545731e323507604fd09b279e2db5601b14a5fd02c01a09'
   '2373168614b527494dff99eb393024608216db79f687d58bad420f6c1e0ad192'
-  '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00'
+  '3581863e3cbcfd0fce0efc682ce7e9e93da96668a977791d356a26d2a7e9b17a'
   'c3c0b845181a67c2f926485299855769afa675bc90b18904c3087ae884cb1873'
   'd8d2562a7cb68ffdfe91fc66af1ed4a8a4e272aa4ab59bea7451ba34b9aba3d4'
   '1eda5a3b026870c737b22e8bcd4954338612c790db688242e003f41a4fa95175'
@@ -59,12 +62,12 @@ sha256sums=(
   'd25e82e26acd42ca3ccc9993622631163425b869b9e16284226d534cff6470f2'
   'fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f'
   '3d34610fc6b5e1b0bfe4e2f36171c2d62c28ef05cb8d704f5a0073be41a43b3d'
-  '50329b24c316b4d25489c9b2891440cfe51829613d5a29518889f0e1df12aff8'
+  '6f79f75e611f57a7bf5108f177146027506cba9326fcc38d7c5dc4085205e2fc'
 )
 
 prepare() {
   cd "$pkgname-$pkgver"
-  # Ghostty requires Zig 0.16.0; Arch's current Zig is not compatible.
+  # Monstar requires Zig 0.17.0; Arch's current Zig is not compatible.
   ZIG_GLOBAL_CACHE_DIR="$srcdir/zig-cache" \
     "$srcdir/zig-x86_64-linux-$_zigver/zig" build --fetch
 }
@@ -96,15 +99,15 @@ package() {
   install -Dm644 "$srcdir/$pkgname-$pkgver/src/assets/SymbolsNerdFontMono-LICENSE" \
     "$pkgdir/usr/share/licenses/$pkgname/SymbolsNerdFontMono-LICENSE"
   # The vendored stb headers contain their MIT notices, not separate license files.
+  # Zig keeps these content-hashed dependency sources in the project zig-pkg directory.
+  local deps="$srcdir/$pkgname-$pkgver/zig-pkg"
   local header
   for header in stb_image.h stb_image_resize.h; do
     sed -n '/^ALTERNATIVE A - MIT License/,/^ALTERNATIVE B/{ /^ALTERNATIVE B/d; p; }' \
-      "$srcdir/$pkgname-$pkgver/vendor/$header" > "$srcdir/$header-LICENSE"
+      "$deps"/ghostty-*/src/stb/$header > "$srcdir/$header-LICENSE"
     install -Dm644 "$srcdir/$header-LICENSE" \
       "$pkgdir/usr/share/licenses/$pkgname/$header-LICENSE"
   done
-  # Zig keeps these content-hashed dependency sources in the project zig-pkg directory.
-  local deps="$srcdir/$pkgname-$pkgver/zig-pkg"
   install -Dm644 "$deps"/ghostty-*/LICENSE "$pkgdir/usr/share/licenses/$pkgname/Ghostty-LICENSE"
   install -Dm644 "$deps"/wayland-*/LICENSE "$pkgdir/usr/share/licenses/$pkgname/zig-wayland-LICENSE"
   install -Dm644 "$deps"/uucode-*/LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/uucode-LICENSE.md"
@@ -126,7 +129,7 @@ package() {
   done
   # Include the exact MPL-covered source, with its original in-file notices.
   install -dm755 "$pkgdir/usr/share/doc/$pkgname"
-  cp -a "$deps/z2d-0.12.2-pre-j5P_HtA8EQDpzu5RUtQhr_Sn9MeQF3_q7rWMw3ouesd0" \
+  cp -a "$deps/z2d-0.13.2-j5P_HkkVFAAtOSQPRTS7wbZLbYs7oETRn7nUKSUwDjM_" \
     "$pkgdir/usr/share/doc/$pkgname/z2d-source"
   install -Dm644 "$srcdir/z2d-LICENSE" "$pkgdir/usr/share/doc/$pkgname/z2d-source/LICENSE"
   install -Dm644 "$srcdir/z2d-COPYING" "$pkgdir/usr/share/doc/$pkgname/z2d-source/COPYING"
