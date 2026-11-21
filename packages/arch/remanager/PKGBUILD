@@ -1,6 +1,6 @@
 # Packaging based on remanager-bin by Kitty Dae Elliott <kdelliott@pm.me>.
 pkgname=remanager
-pkgver=2.0.0
+pkgver=2.0.1
 pkgrel=1
 pkgdesc='Open-source mod manager for reMarkable tablets'
 arch=('x86_64')
@@ -16,12 +16,12 @@ conflicts=('remanager-bin')
 options=('!debug' '!lto')
 source=("reManager-$pkgver.tar.gz::https://github.com/rmitchellscott/reManager/archive/refs/tags/v$pkgver.tar.gz"
         'reManager.desktop' 'frontend-licenses.py' 'README.md'
-        'wails-LICENSE::https://raw.githubusercontent.com/wailsapp/wails/v3.0.0-beta.26/LICENSE'
+        'wails-LICENSE::https://raw.githubusercontent.com/wailsapp/wails/v3.0.0/LICENSE'
         'radix-LICENSE::https://raw.githubusercontent.com/radix-ui/primitives/fcef0668a5c827e5a4baac405474d75680f9a4eb/LICENSE'
         'react-remove-scroll-bar-LICENSE::https://raw.githubusercontent.com/theKashey/react-remove-scroll-bar/7301c160fda44cb8cf2b9fdfde61efad35736196/LICENSE')
-sha256sums=('aa680cb66fd979a532f92e7d1fb6d1ad0e03de688683994111f7b513e3b7d63b'
+sha256sums=('71b7d2ec9a11ed9e102e8b2fb2c51dfd306820216970a0e21c704cbbd68f0e08'
             '8e1c7178a5b540bd805999df8603ed068d7972bbf93931acd726b68260d1cf97'
-            'c5ccbb06974d5aaaa3ba8ce9151fdb8ca713f8c2d2950d1f5a9db1e0b5d1184a'
+            'abfcc9212cac7e7415e6247a8d9006742b7d6efe26c8bd4709f76bf53554dab0'
             'fee5facbb9524ed2e78af4d778342c83bf215cf6ae33c99e37a8c12f1aaad7ad'
             'cede95c28e6e9d67d1c1e49e8ba3c20250c7d4080c3faca1579b6732327ae40d'
             '0e80a2d229d2fd4fc7e8636142ec5d0ff0bc031f14c15b682e2ac01dfd5b5138'

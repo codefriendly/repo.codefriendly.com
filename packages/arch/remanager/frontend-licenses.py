@@ -30,7 +30,7 @@ radix_notices = {
 # original notice from the checksummed upstream repository source.
 supplements = {entry: "radix-LICENSE" for entry in radix_notices}
 supplements[("react-remove-scroll-bar", "2.3.8")] = "react-remove-scroll-bar-LICENSE"
-supplements[("@wailsio/runtime", "3.0.0-beta.26")] = "wails-LICENSE"
+supplements[("@wailsio/runtime", "3.0.0")] = "wails-LICENSE"
 lock = json.loads((frontend / "package-lock.json").read_text())
 rows = ["# Frontend dependency notices", "", "Runtime dependencies from the npm lockfile.", ""]
 for relative, record in sorted(lock["packages"].items()):
