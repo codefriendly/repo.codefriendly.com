@@ -1,6 +1,6 @@
 # Packaging based on pangolin-bin by vbopk9x3 <vbopk9x3@4wrd.cc>.
 pkgname=pangolin
-pkgver=0.21.0
+pkgver=0.23.0
 pkgrel=1
 pkgdesc='Tunnel client for secure reverse proxy access'
 arch=('x86_64' 'aarch64')
@@ -17,7 +17,7 @@ source=("cli-$pkgver.tar.gz::$url/archive/refs/tags/$pkgver.tar.gz"
         'pacman-updates.patch'
         'README.md'
         'Unicode-LICENSE.txt::https://www.unicode.org/license.txt')
-sha256sums=('c1c0740a3ae9bcbc355f44d6cd743c9cb8e555a9be30b50be2be666c39768325'
+sha256sums=('c1d4de529a758566171900fd2218835df0f85e0c14ce79506c84d5817f57eab6'
             'd6ef0ecc211cece73eb81bf2ffc96cae35cad7b2439590afb00f04dab8358c12'
             '91ce50264ba924b7493e444c225d9cefd673d34510011966e45c2deaa23bccfe'
             'e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96')
